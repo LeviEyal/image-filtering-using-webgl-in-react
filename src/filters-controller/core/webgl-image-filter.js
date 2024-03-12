@@ -9,9 +9,9 @@ const FRAGMENT_IDENTITY = `
     precision highp float;
     varying vec2 vUv;
     uniform sampler2D texture;
-    uniform float flipY;
+
     void main(void) {
-        gl_FragColor = texture2D(texture, vec2(vUv.x, flipY * vUv.y));
+      gl_FragColor = texture2D(texture, vUv);
     }`;
 
 /**
@@ -205,7 +205,11 @@ export class WebGLImageFilter {
       ]);
       (this._vertexBuffer = this._gl.createBuffer()),
         this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._vertexBuffer);
-      this._gl.bufferData(this._gl.ARRAY_BUFFER, vertices, this._gl.STATIC_DRAW);
+      this._gl.bufferData(
+        this._gl.ARRAY_BUFFER,
+        vertices,
+        this._gl.STATIC_DRAW
+      );
 
       // Note sure if this is a good idea; at least it makes texture loading
       // in Ejecta instant.
@@ -324,12 +328,15 @@ export class WebGLImageFilter {
       return this._currentProgram;
     }
     const VERTEX_IDENTITY = `
+      precision highp float;
       attribute vec2 pos;
       attribute vec2 uv;
       varying vec2 vUv;
+      uniform float flipY;
+
       void main(void) {
-          gl_Position = vec4(pos, 0, 1);
-          vUv = uv;
+        vUv = uv;
+        gl_Position = vec4(pos.x, pos.y*flipY, 0.0, 1.);
       }`;
 
     // Compile shaders
@@ -363,7 +370,6 @@ export class WebGLImageFilter {
     this._shaderProgramCache[fragmentSource] = this._currentProgram;
     return this._currentProgram;
   }
-
 
   /**
    * Applies a color matrix transformation to the image using WebGL.
@@ -418,7 +424,7 @@ export class WebGLImageFilter {
         : WITH_ALPHA_SHADER;
 
     const program = this._compileShader(shader);
-    this.gl.uniform1fv(program.uniform.m, m);
+    this._gl.uniform1fv(program.uniform.m, m);
     this._draw();
   }
 
@@ -574,8 +580,8 @@ export class WebGLImageFilter {
     const pixelSizeY = 1 / this._height;
 
     const program = this._compileShader(CONVOLUTION_SHADER);
-    this.gl.uniform1fv(program.uniform.m, m);
-    this.gl.uniform2f(program.uniform.px, pixelSizeX, pixelSizeY);
+    this._gl.uniform1fv(program.uniform.m, m);
+    this._gl.uniform2f(program.uniform.px, pixelSizeX, pixelSizeY);
     this._draw();
   }
 
