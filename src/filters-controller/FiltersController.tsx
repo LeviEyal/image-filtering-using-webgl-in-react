@@ -1,7 +1,8 @@
 import { Slider } from "./Slider";
 import { FilterType, FiltersContext, filtersList } from "./useFilters";
-import { filtersConfig } from "./filtersConfig";
+import { getFilterConfig } from "./filtersConfig";
 import { ResetFiltersIcon } from "../assets/icons/ResetFiltersIcon";
+import { Equalizer } from "./Equalizer";
 
 interface FiltersControllerBarProps {
   filtersCtx: FiltersContext;
@@ -11,7 +12,6 @@ export const FiltersControllerBar = ({
   filtersCtx,
 }: FiltersControllerBarProps) => {
   const {
-    appliedFilters,
     isFilterApplied,
     isFilterDisabled,
     dispatch,
@@ -22,12 +22,16 @@ export const FiltersControllerBar = ({
     dispatch({ type: newFilter });
   };
 
+  const handleSectionsChange = (newSections: boolean[]) => {
+    dispatch({ type: "setValue", value: newSections });
+  };
+
   return (
     <div className="flex items-center justify-center gap-1 h-32">
-      {!currentFilter ? (
+      {!currentFilter.value ? (
         <>
           {filtersList.map((f) => {
-            const Icon = filtersConfig[f].icon || (() => <></>);
+            const Icon = getFilterConfig(f).icon || (() => <></>);
             return (
               <button
                 key={f}
@@ -38,15 +42,15 @@ export const FiltersControllerBar = ({
                 onClick={() => handleFilterChange(f)}
               >
                 <Icon size={40} />
-                {filtersConfig[f].label}
+                {getFilterConfig(f).label}
               </button>
             );
           })}
           <button
-            className="w-32 rounded-lg px-6 py-2 flex flex-col justify-center items-center"
+            className="w-32 rounded-lg px-6 py-2 flex flex-col justify-center items-center  hover:shadow disabled:opacity-40  disabled:cursor-not-allowed"
             onClick={() => dispatch({ type: "reset" })}
           >
-            <ResetFiltersIcon size={40} />
+            <ResetFiltersIcon size={45} />
             Reset
           </button>
         </>
@@ -54,16 +58,21 @@ export const FiltersControllerBar = ({
         <div className="flex gap-4 w-1/2 items-center justify-between">
           <h1 className="font-bold">{currentFilter.label}</h1>
           <div className="flex w-full bg-gray-300 rounded-3xl px-5 py-2 gap-10">
-            <Slider
-              value={
-                appliedFilters.find((f) => f.type === currentFilter.id)
-                  ?.value || 0
-              }
-              min={currentFilter.min || 0}
-              max={currentFilter.max || 1}
-              step={currentFilter.step || 0.01}
-              onChange={(value) => dispatch({ type: "setValue", value })}
-            />
+            {currentFilter.type === "slider" && (
+              <Slider
+                value={currentFilter.value as number}
+                min={currentFilter.min || 0}
+                max={currentFilter.max || 1}
+                step={currentFilter.step || 0.01}
+                onChange={(value) => dispatch({ type: "setValue", value })}
+              />
+            )}
+            {currentFilter.type === "equalizer" && (
+              <Equalizer
+                sections={currentFilter.value as boolean[]}
+                onChange={handleSectionsChange}
+              />
+            )}
             <button
               className="text-gray-600 rounded-3xl px-6 py-2 bg-white"
               onClick={() => dispatch({ type: "resetValue" })}

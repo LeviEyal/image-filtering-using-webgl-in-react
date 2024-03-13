@@ -6,6 +6,7 @@ import { InvertFilterIcon } from "../assets/icons/InvertFilterIcon";
 import { O2FilterIcon } from "../assets/icons/O2FilterIcon";
 import { OsFilterIcon } from "../assets/icons/OsFilterIcon";
 import { SenFilterIcon } from "../assets/icons/SenFilterIcon";
+import { VariFilterIcon } from "../assets/icons/VariFilterIcon";
 import { FilterType } from "./useFilters";
 
 interface FilterConfig {
@@ -15,11 +16,12 @@ interface FilterConfig {
   min?: number;
   max?: number;
   step?: number;
+  initial?: number | boolean[];
   icon?: (props: IconProps) => JSX.Element;
   label: string;
 }
 
-export const filtersConfig: Record<FilterType, FilterConfig> = {
+const filtersConfig: Record<FilterType, FilterConfig> = {
   sharpen: {
     id: "sharpen",
     type: "static",
@@ -46,12 +48,20 @@ export const filtersConfig: Record<FilterType, FilterConfig> = {
     icon: BwFilterIcon,
     label: "BW",
   },
+  variance: {
+    id: "variance",
+    type: "equalizer",
+    icon: VariFilterIcon,
+    label: "Vari",
+    initial: [false, false, false, false, false, false],
+  },
   contrast: {
     id: "contrast",
     type: "slider",
     min: -4,
     max: 5,
-    step: 0.5,
+    step: 0.01,
+    initial: 4,
     icon: ContrastFilterIcon,
     label: "Contrast",
   },

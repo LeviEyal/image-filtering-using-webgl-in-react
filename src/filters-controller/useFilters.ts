@@ -1,5 +1,6 @@
-import { useEffect, useReducer } from "react";
-import { filtersConfig, getFilterConfig } from "./filtersConfig";
+import { RefObject, useEffect, useReducer, useRef } from "react";
+import { getFilterConfig } from "./filtersConfig";
+import { WebGLImageFilter } from "./core";
 
 export type FilterType =
   | "sharpen"
@@ -8,7 +9,8 @@ export type FilterType =
   | "blackWhite"
   | "contrast"
   | "osFilter"
-  | "O2Filter";
+  | "O2Filter"
+  | "variance";
 
 export type FilterActionTypes =
   | FilterType
@@ -25,11 +27,12 @@ export const filtersList: FilterType[] = [
   "O2Filter",
   "contrast",
   "blackWhite",
+  "variance"
 ];
 
 interface IActionInterface {
   type: FilterActionTypes;
-  value?: number;
+  value?: number | boolean[];
 }
 
 interface ContrastAction extends IActionInterface {
@@ -37,7 +40,12 @@ interface ContrastAction extends IActionInterface {
   value: number;
 }
 
-type Filter = ContrastAction | IActionInterface;
+interface VarianceAction extends IActionInterface {
+  type: "variance";
+  value: boolean[];
+}
+
+type Filter = ContrastAction | IActionInterface | VarianceAction;
 
 interface FiltersState {
   appliedFilters: Filter[];
@@ -45,14 +53,14 @@ interface FiltersState {
 }
 
 const filtersReducer = (state: FiltersState, action: Filter) => {
-  const toggleFilter = (newFilter: Filter, on: boolean = false) => {
+  const toggleFilter = (newFilter: Filter) => {
     let newAppliedFilters: Filter[] = [];
 
     const isFilterApplied = state.appliedFilters.some(
       (filter) => filter.type === newFilter.type
     );
 
-    if (isFilterApplied && !on) {
+    if (isFilterApplied) {
       newAppliedFilters = state.appliedFilters.filter(
         (filter) => filter.type !== newFilter.type
       );
@@ -68,6 +76,7 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
 
   if (action.type === "reset") {
     return {
+      ...state,
       appliedFilters: [],
       editMode: undefined,
     };
@@ -105,7 +114,9 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
     };
   }
 
-  const filterRule = filtersConfig[action.type];
+
+
+  const filterRule = getFilterConfig(action.type);
 
   switch (filterRule.type) {
     case "static":
@@ -117,35 +128,96 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
         appliedFilters: [...state.appliedFilters, action],
       };
 
+    case "equalizer":
+      return {
+        ...state,
+        editMode: action.type,
+        appliedFilters: [...state.appliedFilters, action],
+      };
+
     default:
       return state;
   }
 };
 
-export const useFilters = () => {
+/**
+ * Custom hook for managing filters in an image processing application.
+ *
+ * @param canvasRef - Reference to the canvas element.
+ * @returns An object containing the applied filters, helper functions, and the current filter configuration.
+ */
+export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
   const [state, dispatch] = useReducer(filtersReducer, {
     appliedFilters: [],
     editMode: undefined,
   } as FiltersState);
 
   useEffect(() => {
-    console.log({ state });
+    console.log({state});
   }, [state]);
+    
 
   const isFilterApplied = (filter: FilterType) =>
     state.appliedFilters.some((appliedFilter) => appliedFilter.type === filter);
 
   const isFilterDisabled = (filter: FilterType) =>
     state.appliedFilters.some((appliedFilter) =>
-      filtersConfig[appliedFilter.type as FilterType].disables?.includes(filter)
+      getFilterConfig(appliedFilter.type as FilterType).disables?.includes(filter)
     );
+
+  const filterManagerRef = useRef<WebGLImageFilter>(null);
+  const inputImageRef = useRef<HTMLImageElement>(new Image());
+  const filteredImageRef = useRef<HTMLImageElement>(new Image());
+  const renderingContextRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  useEffect(() => {
+    inputImageRef.current.src = "/top_view.png";
+
+    inputImageRef.current.onload = () => {
+      renderingContextRef.current = canvasRef.current?.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+      filterManagerRef.current = new WebGLImageFilter();
+      renderingContextRef.current.drawImage(inputImageRef.current, 0, 0);
+    };
+  }, [canvasRef]);
+
+  useEffect(() => {
+    if (!renderingContextRef.current) return;
+
+    if (state.appliedFilters.length === 0) {
+      renderingContextRef.current.drawImage(inputImageRef.current, 0, 0);
+    } else {
+      state.appliedFilters.forEach((filter) => {
+        filterManagerRef.current.addFilter(filter.type, filter.value || 0);
+      });
+
+      filteredImageRef.current = filterManagerRef.current.apply(
+        inputImageRef.current
+      );
+      renderingContextRef.current.drawImage(filteredImageRef.current, 0, 0);
+    }
+
+    return () => {
+      filterManagerRef.current.reset();
+    };
+  }, [state.appliedFilters]);
+
+  const currentFilterConf = getFilterConfig(state.editMode as FilterType);
+
+  const currentFilter = {
+    ...currentFilterConf,
+    value: state.appliedFilters.find(
+      (filter) => filter.type === state.editMode
+    )?.value || currentFilterConf?.initial,
+  }
 
   return {
     appliedFilters: state.appliedFilters,
     isFilterApplied,
     isFilterDisabled,
     dispatch,
-    currentFilter: getFilterConfig(state.editMode as FilterType),
+    currentFilter,
   };
 };
 
