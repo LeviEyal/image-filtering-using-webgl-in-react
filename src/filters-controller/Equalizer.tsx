@@ -3,19 +3,19 @@ interface EqualizerProps {
   onChange: (sections: boolean[]) => void;
 }
 
-export const Equalizer = (props: EqualizerProps) => {
+export const Equalizer = ({ onChange, sections }: EqualizerProps) => {
   return (
-    <div className="w-full h-full rounded-3xl flex items-center justify-between m-auto divide-x divide-black bg-white overflow-hidden">
-      {props.sections.map((section, index) => (
+    <div className="w-full h-4 rounded-3xl flex m-auto bg-white overflow-hidden divide-x divide-black">
+      {sections.map((section, index) => (
         <div
           key={index}
-          className={`h-3 flex-1 ${
+          className={`h-full w-full cursor-pointer ${
             section ? "bg-white" : "bg-gradient-to-r from-blue-950 to-cyan-500"
-          } cursor-pointer`}
+          }`}
           onClick={() => {
-            const newSections = [...props.sections];
+            const newSections = [...sections];
             newSections[index] = !newSections[index];
-            props.onChange(newSections);
+            onChange(newSections);
           }}
         />
       ))}

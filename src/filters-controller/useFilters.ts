@@ -27,7 +27,7 @@ export const filtersList: FilterType[] = [
   "O2Filter",
   "contrast",
   "blackWhite",
-  "variance"
+  "variance",
 ];
 
 interface IActionInterface {
@@ -114,8 +114,6 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
     };
   }
 
-
-
   const filterRule = getFilterConfig(action.type);
 
   switch (filterRule.type) {
@@ -123,16 +121,18 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
       return toggleFilter(action);
     case "slider":
       return {
-        ...state,
+        ...(state.appliedFilters.some((filter) => filter.type === action.type)
+          ? state
+          : toggleFilter(action)),
         editMode: action.type,
-        appliedFilters: [...state.appliedFilters, action],
       };
 
     case "equalizer":
       return {
-        ...state,
+        ...(state.appliedFilters.some((filter) => filter.type === action.type)
+          ? state
+          : toggleFilter(action)),
         editMode: action.type,
-        appliedFilters: [...state.appliedFilters, action],
       };
 
     default:
@@ -153,25 +153,26 @@ export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
   } as FiltersState);
 
   useEffect(() => {
-    console.log({state});
+    console.log({ state });
   }, [state]);
-    
 
   const isFilterApplied = (filter: FilterType) =>
     state.appliedFilters.some((appliedFilter) => appliedFilter.type === filter);
 
   const isFilterDisabled = (filter: FilterType) =>
     state.appliedFilters.some((appliedFilter) =>
-      getFilterConfig(appliedFilter.type as FilterType).disables?.includes(filter)
+      getFilterConfig(appliedFilter.type as FilterType).disables?.includes(
+        filter
+      )
     );
 
-  const filterManagerRef = useRef<WebGLImageFilter>(null);
+  const filterManagerRef = useRef<WebGLImageFilter>();
   const inputImageRef = useRef<HTMLImageElement>(new Image());
   const filteredImageRef = useRef<HTMLImageElement>(new Image());
   const renderingContextRef = useRef<CanvasRenderingContext2D | null>(null);
 
   useEffect(() => {
-    inputImageRef.current.src = "/top_view.png";
+    inputImageRef.current.src = "4/top_view.png";
 
     inputImageRef.current.onload = () => {
       renderingContextRef.current = canvasRef.current?.getContext(
@@ -183,23 +184,23 @@ export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
   }, [canvasRef]);
 
   useEffect(() => {
-    if (!renderingContextRef.current) return;
+    if (!renderingContextRef.current || !filteredImageRef.current) return;
 
     if (state.appliedFilters.length === 0) {
       renderingContextRef.current.drawImage(inputImageRef.current, 0, 0);
     } else {
       state.appliedFilters.forEach((filter) => {
-        filterManagerRef.current.addFilter(filter.type, filter.value || 0);
+        filterManagerRef.current?.addFilter(filter.type, filter.value);
       });
 
-      filteredImageRef.current = filterManagerRef.current.apply(
+      filteredImageRef.current = filterManagerRef.current?.apply(
         inputImageRef.current
-      );
+      )
       renderingContextRef.current.drawImage(filteredImageRef.current, 0, 0);
     }
 
     return () => {
-      filterManagerRef.current.reset();
+      filterManagerRef.current?.reset();
     };
   }, [state.appliedFilters]);
 
@@ -207,10 +208,14 @@ export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
 
   const currentFilter = {
     ...currentFilterConf,
-    value: state.appliedFilters.find(
-      (filter) => filter.type === state.editMode
-    )?.value || currentFilterConf?.initial,
-  }
+    value:
+      state.appliedFilters.find((filter) => filter.type === state.editMode)
+        ?.value || currentFilterConf?.initial,
+  };
+
+  const availableFilters = filtersList.filter(
+    (filter) => getFilterConfig(filter).on
+  );
 
   return {
     appliedFilters: state.appliedFilters,
@@ -218,6 +223,7 @@ export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
     isFilterDisabled,
     dispatch,
     currentFilter,
+    availableFilters,
   };
 };
 

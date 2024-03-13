@@ -1,3 +1,15 @@
+import { FilterType } from "../useFilters";
+import {
+  BLACK_AND_WHITE_SHADER,
+  CONVOLUTION_SHADER,
+  FRAGMENT_IDENTITY_SHADER,
+  INVERT_SHADER,
+  STRIP_HUE_RANGE_SHADER,
+  VERTEX_IDENTITY_SHADER,
+  COLOR_MATRIX_WITHOUT_ALPHA_SHADER,
+  COLOR_MATRIX_WITH_ALPHA_SHADER,
+} from "./shaders";
+
 const OS_FILTER_RANGE = [0, 2];
 const OS_FILTER_LIGHTNESS = 1;
 const O2_FILTER_RANGE = [2, 256];
@@ -5,21 +17,16 @@ const O2_FILTER_LIGHTNESS = 1;
 const EMBOSS_FILTER_AMOUNT = 2;
 const SHARPEN_FILTER_AMOUNT = 2;
 
-const FRAGMENT_IDENTITY = `
-    precision highp float;
-    varying vec2 vUv;
-    uniform sampler2D texture;
-
-    void main(void) {
-      gl_FragColor = texture2D(texture, vUv);
-    }`;
-
 /**
  * Represents a WebGL program used for image filtering.
  */
 export class WebGLProgram {
-  constructor(gl, vertexSource, fragmentSource) {
-    const _collect = (source, prefix, collection) => {
+  uniform: Record<string, WebGLUniformLocation> = {};
+  attribute: Record<string, number> = {};
+  id: WebGLProgram;
+
+  constructor(gl: WebGLRenderingContext, vertexSource: string, fragmentSource: string) {
+    const _collect = (source: string, prefix: string, collection: Record<string, WebGLUniformLocation>) => {
       const r = new RegExp("\\b" + prefix + " \\w+ (\\w+)", "ig");
       source.replace(r, (match, name) => {
         collection[name] = 0;
@@ -27,8 +34,8 @@ export class WebGLProgram {
       });
     };
 
-    const _compile = (gl, source, type) => {
-      const shader = gl.createShader(type);
+    const _compile = (gl: WebGLRenderingContext, source: string, type: number) => {
+      const shader = gl.createShader(type) as WebGLShader;
       gl.shaderSource(shader, source);
       gl.compileShader(shader);
 
@@ -39,13 +46,10 @@ export class WebGLProgram {
       return shader;
     };
 
-    this.uniform = {};
-    this.attribute = {};
+    const _vsh = _compile(gl, vertexSource, gl.VERTEX_SHADER) as WebGLShader;
+    const _fsh = _compile(gl, fragmentSource, gl.FRAGMENT_SHADER) as WebGLShader;
 
-    const _vsh = _compile(gl, vertexSource, gl.VERTEX_SHADER);
-    const _fsh = _compile(gl, fragmentSource, gl.FRAGMENT_SHADER);
-
-    this.id = gl.createProgram();
+    this.id = gl.createProgram() as WebGLProgram;
     gl.attachShader(this.id, _vsh);
     gl.attachShader(this.id, _fsh);
     gl.linkProgram(this.id);
@@ -66,41 +70,52 @@ export class WebGLProgram {
     _collect(vertexSource, "uniform", this.uniform);
     _collect(fragmentSource, "uniform", this.uniform);
     for (const u in this.uniform) {
-      this.uniform[u] = gl.getUniformLocation(this.id, u);
+      this.uniform[u] = gl.getUniformLocation(this.id, u) as WebGLUniformLocation;
     }
   }
+}
+
+interface Filter {
+  func: WebGLImageFilter[FilterType];
+  args: unknown[];
+}
+
+interface FrameBuffer {
+  fbo: WebGLFramebuffer | null;
+  texture: WebGLTexture | null;
 }
 
 /**
  * Represents a WebGLImageFilter used for applying image filters using WebGL.
  */
 export class WebGLImageFilter {
-  _gl = null;
+  _gl: WebGLRenderingContext;
   _drawCount = 0;
-  _sourceTexture = null;
+  _sourceTexture: WebGLTexture | null = null;
   _lastInChain = false;
   _currentFramebufferIndex = -1;
-  _tempFramebuffers = [null, null];
-  _filterChain = [];
+  _tempFramebuffers: FrameBuffer[] | null[] = [];
+  _filterChain: Filter[] = [];
   _width = -1;
   _height = -1;
-  _vertexBuffer = null;
-  _currentProgram = null;
+  _vertexBuffer: WebGLBuffer | null = null;
+  _currentProgram: WebGLProgram | null = null;
   applied = false;
-  _shaderProgramCache = {};
-  _canvas = null;
+  _shaderProgramCache: Record<string, WebGLProgram> = {};
+  _canvas: HTMLCanvasElement;
 
   constructor() {
     this._canvas = document.createElement("canvas");
     this._gl =
       this._canvas.getContext("webgl") ||
-      this._canvas.getContext("experimental-webgl");
+      this._canvas.getContext("experimental-webgl") as WebGLRenderingContext;
     if (!this._gl) {
       throw "Couldn't get WebGL context";
     }
   }
 
-  addFilter(name, ...args) {
+  addFilter(name: FilterType, ...args: unknown[]) {
+    // get the method from the name
     const filter = this[name];
     this._filterChain.push({ func: filter, args: args });
   }
@@ -109,7 +124,7 @@ export class WebGLImageFilter {
     this._filterChain = [];
   }
 
-  apply(image) {
+  apply(image: HTMLImageElement) {
     this._resize(image.width, image.height);
     this._drawCount = 0;
 
@@ -161,20 +176,21 @@ export class WebGLImageFilter {
 
     // No filters? Just draw
     if (this._filterChain.length == 0) {
-      this._compileShader(FRAGMENT_IDENTITY);
+      this._compileShader(FRAGMENT_IDENTITY_SHADER);
       this._draw();
       return this._canvas;
     }
 
     this._filterChain.forEach((f, i) => {
       this._lastInChain = i === this._filterChain.length - 1;
-      f.func.apply(this, f.args || []);
+      // @ts-expect-error - TS doesn't know that f.func is a function
+      f.func.apply(this, f.args);
     });
 
     return this._canvas;
   }
 
-  _resize(width, height) {
+  _resize(width: number, height: number) {
     // Same width/height? Nothing to do here
     if (width == this._width && height == this._height) {
       return;
@@ -209,7 +225,7 @@ export class WebGLImageFilter {
     this._tempFramebuffers = [null, null];
   }
 
-  _getTempFramebuffer(index) {
+  _getTempFramebuffer(index: number) {
     this._tempFramebuffers[index] =
       this._tempFramebuffers[index] ||
       this._createFramebufferTexture(this._width, this._height);
@@ -217,7 +233,7 @@ export class WebGLImageFilter {
     return this._tempFramebuffers[index];
   }
 
-  _createFramebufferTexture(width, height) {
+  _createFramebufferTexture(width: number, height: number) {
     const fbo = this._gl.createFramebuffer();
     this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, fbo);
 
@@ -275,11 +291,9 @@ export class WebGLImageFilter {
 
   /**
    * Draws the image filter using WebGL.
-   *
-   * @param {number} flags - The flags indicating the drawing options.
-   * @private
    */
-  _draw(flags) {
+  _draw(flags = 0) {
+    if (!this._currentProgram) return;
     let source = null,
       target = null,
       flipY = false;
@@ -290,7 +304,7 @@ export class WebGLImageFilter {
       source = this._sourceTexture;
     } else {
       // All following draw calls use the temp buffer last drawn to
-      source = this._getTempFramebuffer(this._currentFramebufferIndex).texture;
+      source = this._getTempFramebuffer(this._currentFramebufferIndex)?.texture;
     }
     this._drawCount++;
 
@@ -303,35 +317,23 @@ export class WebGLImageFilter {
     } else {
       // Intermediate draw call - get a temp buffer to draw to
       this._currentFramebufferIndex = (this._currentFramebufferIndex + 1) % 2;
-      target = this._getTempFramebuffer(this._currentFramebufferIndex).fbo;
+      target = this._getTempFramebuffer(this._currentFramebufferIndex)?.fbo;
     }
 
     // Bind the source and target and draw the two triangles
-    this._gl.bindTexture(this._gl.TEXTURE_2D, source);
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, target);
+    this._gl.bindTexture(this._gl.TEXTURE_2D, source as WebGLTexture);
+    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, target as WebGLFramebuffer);
 
     this._gl.uniform1f(this._currentProgram.uniform.flipY, flipY ? -1 : 1);
     this._gl.drawArrays(this._gl.TRIANGLES, 0, 6);
   }
 
-  _compileShader(fragmentSource) {
+  _compileShader(fragmentSource: string) {
     if (this._shaderProgramCache[fragmentSource]) {
       this._currentProgram = this._shaderProgramCache[fragmentSource];
       this._gl.useProgram(this._currentProgram.id);
       return this._currentProgram;
     }
-
-    const VERTEX_IDENTITY_SHADER = `
-      precision highp float;
-      attribute vec2 pos;
-      attribute vec2 uv;
-      varying vec2 vUv;
-      uniform float flipY;
-
-      void main(void) {
-        vUv = uv;
-        gl_Position = vec4(pos.x, pos.y*flipY, 0.0, 1.);
-      }`;
 
     // Compile shaders
     this._currentProgram = new WebGLProgram(
@@ -368,36 +370,8 @@ export class WebGLImageFilter {
 
   /**
    * Applies a color matrix transformation to the image using WebGL.
-   * @param {number[]} matrix - The color matrix to apply.
    */
-  colorMatrix(matrix) {
-    const WITH_ALPHA_SHADER = `
-        precision highp float;
-        varying vec2 vUv;
-        uniform sampler2D texture;
-        uniform float m[20];
-    
-        void main(void) {
-            vec4 c = texture2D(texture, vUv);
-            gl_FragColor.r = m[0] * c.r + m[1] * c.g + m[2] * c.b + m[3] * c.a + m[4];
-            gl_FragColor.g = m[5] * c.r + m[6] * c.g + m[7] * c.b + m[8] * c.a + m[9];
-            gl_FragColor.b = m[10] * c.r + m[11] * c.g + m[12] * c.b + m[13] * c.a + m[14];
-            gl_FragColor.a = m[15] * c.r + m[16] * c.g + m[17] * c.b + m[18] * c.a + m[19];
-        }`;
-
-    const WITHOUT_ALPHA_SHADER = `
-        precision highp float;
-        varying vec2 vUv;
-        uniform sampler2D texture;
-        uniform float m[20];
-    
-        void main(void) {
-            vec4 c = texture2D(texture, vUv);
-            gl_FragColor.r = m[0] * c.r + m[1] * c.g + m[2] * c.b + m[4];
-            gl_FragColor.g = m[5] * c.r + m[6] * c.g + m[7] * c.b + m[9];
-            gl_FragColor.b = m[10] * c.r + m[11] * c.g + m[12] * c.b + m[14];
-            gl_FragColor.a = c.a;
-        }`;
+  colorMatrix(matrix: number[]) {
     // Create a Float32 Array and normalize the offset component to 0-1
     const m = new Float32Array(matrix);
     m[4] /= 255;
@@ -415,8 +389,8 @@ export class WebGLImageFilter {
       0 == m[16] &&
       0 == m[17] &&
       0 == m[19]
-        ? WITHOUT_ALPHA_SHADER
-        : WITH_ALPHA_SHADER;
+        ? COLOR_MATRIX_WITHOUT_ALPHA_SHADER
+        : COLOR_MATRIX_WITH_ALPHA_SHADER;
 
     const program = this._compileShader(shader);
     this._gl.uniform1fv(program.uniform.m, m);
@@ -425,35 +399,8 @@ export class WebGLImageFilter {
 
   /**
    * Applies a convolution filter to the image using the provided matrix.
-   * @param {number[]} matrix - The convolution matrix.
    */
-  convolution(matrix) {
-    const CONVOLUTION_SHADER = `
-      precision highp float;
-      varying vec2 vUv;
-      uniform sampler2D texture;
-      uniform vec2 px;
-      uniform float m[9];
-      
-      void main(void) {
-        vec4 c11 = texture2D(texture, vUv - px);                          // top left
-        vec4 c12 = texture2D(texture, vec2(vUv.x, vUv.y - px.y));         // top center
-        vec4 c13 = texture2D(texture, vec2(vUv.x + px.x, vUv.y - px.y));  // top right
-        
-        vec4 c21 = texture2D(texture, vec2(vUv.x - px.x, vUv.y) );        // mid left
-        vec4 c22 = texture2D(texture, vUv);                               // mid center
-        vec4 c23 = texture2D(texture, vec2(vUv.x + px.x, vUv.y) );        // mid right
-        
-        vec4 c31 = texture2D(texture, vec2(vUv.x - px.x, vUv.y + px.y) ); // bottom left
-        vec4 c32 = texture2D(texture, vec2(vUv.x, vUv.y + px.y) );        // bottom center
-        vec4 c33 = texture2D(texture, vUv + px ); // bottom right
-        
-        gl_FragColor = 
-          c11 * m[0] + c12 * m[1] + c22 * m[2] +
-          c21 * m[3] + c22 * m[4] + c23 * m[5] +
-          c31 * m[6] + c32 * m[7] + c33 * m[8];
-        gl_FragColor.a = c22.a;
-    }`;
+  convolution(matrix: number[]) {
     const m = new Float32Array(matrix);
     const pixelSizeX = 1 / this._width;
     const pixelSizeY = 1 / this._height;
@@ -468,7 +415,7 @@ export class WebGLImageFilter {
    * Adjusts the contrast of the image.
    * @param {number} amount - The amount of contrast adjustment. A value of 0 means no change, negative values decrease contrast, and positive values increase contrast.
    */
-  contrast(amount) {
+  contrast(amount: number) {
     const v = (amount || 0) + 1;
     const o = -128 * (v - 1);
 
@@ -503,24 +450,9 @@ export class WebGLImageFilter {
   }
 
   /**
-   * Applies the negative filter to the image.
-   */
-  negative() {
-    this.contrast(-2);
-  }
-
-  /**
    * Inverts the colors of the image using WebGL.
    */
   invert() {
-    const INVERT_SHADER = `
-    precision highp float;
-              varying vec2 vUv;
-              uniform sampler2D texture;
-              void main(void) {
-                  vec4 c = texture2D(texture, vUv);
-                  gl_FragColor = vec4(1.0 - c.r, 1.0 - c.g, 1.0 - c.b, c.a);
-              }`;
     this._compileShader(INVERT_SHADER);
     this._draw();
   }
@@ -545,32 +477,7 @@ export class WebGLImageFilter {
    * Applies an OS filter to the image using WebGL.
    */
   osFilter() {
-    const OS_FILTER_SHADER = `
-        precision highp float;
-        varying vec2 vUv;
-        uniform sampler2D texture;
-        uniform vec2 hue_range;
-        uniform float lightness_for_deleted;
-
-        void main(void) {
-            vec4 c = texture2D(texture, vUv);
-            float lightness = (c.r + c.g + c.b) / 3.0;
-            float hue = 0.0;
-            if (c.r >= c.g && c.r >= c.b) {
-                hue = (c.g - c.b) / (c.r - min(c.g, c.b));
-            } else if (c.g >= c.r && c.g >= c.b) {
-                hue = 2.0 + (c.b - c.r) / (c.g - min(c.r, c.b));
-            } else {
-                hue = 4.0 + (c.r - c.g) / (c.b - min(c.r, c.g));
-            }
-            if (hue >= hue_range[0] && hue <= hue_range[1]) {
-                gl_FragColor = vec4(lightness_for_deleted, lightness_for_deleted, lightness_for_deleted, c.a);
-            } else {
-                gl_FragColor = c;
-            }
-        }
-    `;
-    const program = this._compileShader(OS_FILTER_SHADER);
+    const program = this._compileShader(STRIP_HUE_RANGE_SHADER);
     const _hue_range = OS_FILTER_RANGE;
     const _lightness_for_deleted = OS_FILTER_LIGHTNESS;
     this._gl.uniform2f(program.uniform.hue_range, _hue_range[0], _hue_range[1]);
@@ -585,30 +492,7 @@ export class WebGLImageFilter {
    * Applies an O2 filter to the image using WebGL.
    */
   O2Filter() {
-    const O2_FILTER_SHADER = `
-            precision highp float;
-            varying vec2 vUv;
-            uniform sampler2D texture;
-            uniform vec2 hue_range;
-            uniform float lightness_for_deleted;
-            void main(void) {
-                vec4 c = texture2D(texture, vUv);
-                float lightness = (c.r + c.g + c.b) / 3.0;
-                float hue = 0.0;
-                if (c.r >= c.g && c.r >= c.b) {
-                    hue = (c.g - c.b) / (c.r - min(c.g, c.b));
-                } else if (c.g >= c.r && c.g >= c.b) {
-                    hue = 2.0 + (c.b - c.r) / (c.g - min(c.r, c.b));
-                } else {
-                    hue = 4.0 + (c.r - c.g) / (c.b - min(c.r, c.g));
-                }
-                if (hue >= hue_range[0] && hue <= hue_range[1]) {
-                    gl_FragColor = vec4(lightness_for_deleted, lightness_for_deleted, lightness_for_deleted, c.a);
-                } else {
-                    gl_FragColor = c;
-                }
-            }`;
-    const program = this._compileShader(O2_FILTER_SHADER);
+    const program = this._compileShader(STRIP_HUE_RANGE_SHADER);
     const _hue_range = O2_FILTER_RANGE;
     const _lightness_for_deleted = O2_FILTER_LIGHTNESS;
     this._gl.uniform2f(program.uniform.hue_range, _hue_range[0], _hue_range[1]);
@@ -623,21 +507,14 @@ export class WebGLImageFilter {
    * Converts the image to black and white.
    */
   blackWhite() {
-    const BLACK_AND_WHITE_SHADER = `
-        precision highp float;
-        varying vec2 vUv;
-        uniform sampler2D texture;
-        void main(void) {
-            vec4 c = texture2D(texture, vUv);
-            float lightness = (c.r + c.g + c.b) / 3.0;
-            gl_FragColor = vec4(lightness, lightness, lightness, c.a);
-        }`;
     this._compileShader(BLACK_AND_WHITE_SHADER);
     this._draw();
   }
 
-  variance(variance) {
+  variance(variance: boolean[]) {
     console.log("TODO: Implement variance filter with:", variance);
     // TODO: Implement variance filter
+    this._compileShader(FRAGMENT_IDENTITY_SHADER);
+    this._draw();
   }
 }

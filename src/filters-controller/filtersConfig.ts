@@ -19,6 +19,7 @@ interface FilterConfig {
   initial?: number | boolean[];
   icon?: (props: IconProps) => JSX.Element;
   label: string;
+  on: boolean;
 }
 
 const filtersConfig: Record<FilterType, FilterConfig> = {
@@ -27,6 +28,7 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     type: "static",
     icon: SenFilterIcon,
     label: "SEN",
+    on: true,
   },
   emboss: {
     id: "emboss",
@@ -34,6 +36,7 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     disables: ["sharpen"],
     icon: HiFilterIcon,
     label: "HI",
+    on: true,
   },
   invert: {
     id: "invert",
@@ -41,12 +44,14 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     disables: ["contrast"],
     icon: InvertFilterIcon,
     label: "Invert",
+    on: true,
   },
   blackWhite: {
     id: "blackWhite",
     type: "static",
     icon: BwFilterIcon,
     label: "BW",
+    on: true,
   },
   variance: {
     id: "variance",
@@ -54,6 +59,7 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     icon: VariFilterIcon,
     label: "Vari",
     initial: [false, false, false, false, false, false],
+    on: true,
   },
   contrast: {
     id: "contrast",
@@ -64,6 +70,7 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     initial: 4,
     icon: ContrastFilterIcon,
     label: "Contrast",
+    on: true,
   },
   osFilter: {
     id: "osFilter",
@@ -71,6 +78,7 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     disables: ["O2Filter"],
     icon: OsFilterIcon,
     label: "OS",
+    on: true,
   },
   O2Filter: {
     id: "O2Filter",
@@ -78,6 +86,7 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     disables: ["osFilter"],
     icon: O2FilterIcon,
     label: "O2",
+    on: true,
   },
 };
 

@@ -1,5 +1,5 @@
 import { Slider } from "./Slider";
-import { FilterType, FiltersContext, filtersList } from "./useFilters";
+import { FilterType, FiltersContext } from "./useFilters";
 import { getFilterConfig } from "./filtersConfig";
 import { ResetFiltersIcon } from "../assets/icons/ResetFiltersIcon";
 import { Equalizer } from "./Equalizer";
@@ -16,6 +16,7 @@ export const FiltersControllerBar = ({
     isFilterDisabled,
     dispatch,
     currentFilter,
+    availableFilters
   } = filtersCtx;
 
   const handleFilterChange = (newFilter: FilterType) => {
@@ -27,10 +28,10 @@ export const FiltersControllerBar = ({
   };
 
   return (
-    <div className="flex items-center justify-center gap-1 h-32">
+    <div className="flex items-center justify-center gap-1 h-32 font-bold text-gray-700">
       {!currentFilter.value ? (
         <>
-          {filtersList.map((f) => {
+          {availableFilters.map((f) => {
             const Icon = getFilterConfig(f).icon || (() => <></>);
             return (
               <button
@@ -56,7 +57,7 @@ export const FiltersControllerBar = ({
         </>
       ) : (
         <div className="flex gap-4 w-1/2 items-center justify-between">
-          <h1 className="font-bold">{currentFilter.label}</h1>
+          <h1>{currentFilter.label}</h1>
           <div className="flex w-full bg-gray-300 rounded-3xl px-5 py-2 gap-10">
             {currentFilter.type === "slider" && (
               <Slider

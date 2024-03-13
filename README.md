@@ -1,24 +1,19 @@
-New HBS release ready for QA:
-# Release notes - Software - HBS v1.4.0rc0
-SW versions:
-- seetrue-hbs-agent version 0.1.2
-- seetrue-hbs-algo-engine version v0.3.0rc2
-- seetrue-hbs-frontend version v1.3.8rc1
-- seetrue-hbs-backend version v1.3.0rc0
+# XRAY 2.0 / Filters Management
 
-### Sub-Development-Task
-https://seetrue.atlassian.net/browse/SF-1557
-https://seetrue.atlassian.net/browse/SF-1558
+- (Overview)[#overview]
+- (Design Goals and Objectives)[#design-goals-and-objectives]
+- (UI Design)[#ui-design]
+- (Technical Design)[#technical-design]
+- (Testing Plan)[#testing-plan]
+- (Implementation Plan)[#implementation-plan]
+- (Risks and Mitigation)[#risks-and-mitigation]
 
-### Story
-https://seetrue.atlassian.net/browse/SF-1300
-https://seetrue.atlassian.net/browse/SF-1269
-https://seetrue.atlassian.net/browse/SF-1382
+## Overview
 
-### Bug Fixes
-https://seetrue.atlassian.net/browse/SF-706
-https://seetrue.atlassian.net/browse/SF-858
-https://seetrue.atlassian.net/browse/SF-1079
-https://seetrue.atlassian.net/browse/SF-1080
-https://seetrue.atlassian.net/browse/SF-1132
-https://seetrue.atlassian.net/browse/SF-1359
+This document describes the design of the Filters Management feature in XRAY 2.0.
+
+The Filters Management feature allows users to apply various image filters to an input image using WebGL. The feature provides a set of predefined filters, such as color matrix transformations, convolution filters, contrast adjustments, edge detection, negative, inversion, sharpen, emboss, OS filter, O2 filter, and black and white conversion. Users can also create custom filters by combining multiple predefined filters in a sequence.
+
+The feature is implemented as a library that provides a set of classes for applying image filters using WebGL in the browser. It consists of two main classes: `WebGLProgram` and `WebGLImageFilter`.
+
+## Design Goals and Objectives
