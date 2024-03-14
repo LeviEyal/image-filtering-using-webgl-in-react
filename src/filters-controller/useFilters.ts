@@ -32,7 +32,7 @@ export const filtersList: FilterType[] = [
 
 interface IActionInterface {
   type: FilterActionTypes;
-  value?: number | boolean[];
+  value?: number;
 }
 
 interface ContrastAction extends IActionInterface {
@@ -42,7 +42,7 @@ interface ContrastAction extends IActionInterface {
 
 interface VarianceAction extends IActionInterface {
   type: "variance";
-  value: boolean[];
+  value: number;
 }
 
 type Filter = ContrastAction | IActionInterface | VarianceAction;
@@ -120,14 +120,7 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
     case "static":
       return toggleFilter(action);
     case "slider":
-      return {
-        ...(state.appliedFilters.some((filter) => filter.type === action.type)
-          ? state
-          : toggleFilter(action)),
-        editMode: action.type,
-      };
-
-    case "equalizer":
+    case "volume":
       return {
         ...(state.appliedFilters.some((filter) => filter.type === action.type)
           ? state

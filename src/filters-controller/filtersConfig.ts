@@ -11,12 +11,12 @@ import { FilterType } from "./useFilters";
 
 interface FilterConfig {
   id: FilterType;
-  type: "slider" | "static" | "equalizer";
+  type: "slider" | "static" | "volume";
   disables?: FilterType[];
   min?: number;
   max?: number;
   step?: number;
-  initial?: number | boolean[];
+  initial?: number;
   icon?: (props: IconProps) => JSX.Element;
   label: string;
   on: boolean;
@@ -55,10 +55,10 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
   },
   variance: {
     id: "variance",
-    type: "equalizer",
+    type: "volume",
     icon: VariFilterIcon,
     label: "Vari",
-    initial: [false, false, false, false, false, false],
+    initial: 1,
     on: true,
   },
   contrast: {

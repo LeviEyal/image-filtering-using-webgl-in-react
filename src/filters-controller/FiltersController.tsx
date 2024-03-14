@@ -2,7 +2,7 @@ import { Slider } from "./Slider";
 import { FilterType, FiltersContext } from "./useFilters";
 import { getFilterConfig } from "./filtersConfig";
 import { ResetFiltersIcon } from "../assets/icons/ResetFiltersIcon";
-import { Equalizer } from "./Equalizer";
+import { VolumeMeter } from "./VolumeMeter";
 
 interface FiltersControllerBarProps {
   filtersCtx: FiltersContext;
@@ -23,8 +23,8 @@ export const FiltersControllerBar = ({
     dispatch({ type: newFilter });
   };
 
-  const handleSectionsChange = (newSections: boolean[]) => {
-    dispatch({ type: "setValue", value: newSections });
+  const handleSetVari = (value: number) => {
+    dispatch({ type: "setValue", value });
   };
 
   return (
@@ -61,17 +61,17 @@ export const FiltersControllerBar = ({
           <div className="flex w-full bg-gray-300 rounded-3xl px-5 py-2 gap-10">
             {currentFilter.type === "slider" && (
               <Slider
-                value={currentFilter.value as number}
+                value={currentFilter.value}
                 min={currentFilter.min || 0}
                 max={currentFilter.max || 1}
                 step={currentFilter.step || 0.01}
                 onChange={(value) => dispatch({ type: "setValue", value })}
               />
             )}
-            {currentFilter.type === "equalizer" && (
-              <Equalizer
-                sections={currentFilter.value as boolean[]}
-                onChange={handleSectionsChange}
+            {currentFilter.type === "volume" && (
+              <VolumeMeter
+                value={currentFilter.value}
+                onChange={handleSetVari}
               />
             )}
             <button

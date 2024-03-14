@@ -14,8 +14,8 @@ const OS_FILTER_RANGE = [0, 2];
 const OS_FILTER_LIGHTNESS = 1;
 const O2_FILTER_RANGE = [2, 256];
 const O2_FILTER_LIGHTNESS = 1;
-const EMBOSS_FILTER_AMOUNT = 2;
-const SHARPEN_FILTER_AMOUNT = 2;
+const EMBOSS_FILTER_AMOUNT = 4;
+const SHARPEN_FILTER_AMOUNT = 10;
 
 /**
  * Represents a WebGL program used for image filtering.
@@ -511,7 +511,7 @@ export class WebGLImageFilter {
     this._draw();
   }
 
-  variance(variance: boolean[]) {
+  variance(variance: number) {
     console.log("TODO: Implement variance filter with:", variance);
     // TODO: Implement variance filter
     this._compileShader(FRAGMENT_IDENTITY_SHADER);
