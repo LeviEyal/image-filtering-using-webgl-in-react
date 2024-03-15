@@ -7,22 +7,22 @@ import { O2FilterIcon } from "../assets/icons/O2FilterIcon";
 import { OsFilterIcon } from "../assets/icons/OsFilterIcon";
 import { SenFilterIcon } from "../assets/icons/SenFilterIcon";
 import { VariFilterIcon } from "../assets/icons/VariFilterIcon";
-import { FilterType } from "./useFilters";
+import { FilterId } from "./useFilters";
 
 interface FilterConfig {
-  id: FilterType;
+  id: FilterId;
   type: "slider" | "static" | "volume";
-  disables?: FilterType[];
+  disables?: FilterId[];
   min?: number;
   max?: number;
   step?: number;
-  initial?: number;
+  initial?: unknown[];
   icon?: (props: IconProps) => JSX.Element;
   label: string;
   on: boolean;
 }
 
-const filtersConfig: Record<FilterType, FilterConfig> = {
+const filtersConfig: Record<FilterId, FilterConfig> = {
   sharpen: {
     id: "sharpen",
     type: "static",
@@ -58,16 +58,16 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
     type: "volume",
     icon: VariFilterIcon,
     label: "Vari",
-    initial: 1,
+    initial: [1],
     on: true,
   },
   contrast: {
     id: "contrast",
     type: "slider",
     min: -4,
-    max: 5,
+    max: 4,
     step: 0.01,
-    initial: 4,
+    initial: [0],
     icon: ContrastFilterIcon,
     label: "Contrast",
     on: true,
@@ -90,5 +90,5 @@ const filtersConfig: Record<FilterType, FilterConfig> = {
   },
 };
 
-export const getFilterConfig = (filter: FilterType) =>
+export const getFilterConfig = (filter: FilterId) =>
   filtersConfig[filter] || null;

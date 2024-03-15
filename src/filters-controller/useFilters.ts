@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from "react";
 import { getFilterConfig } from "./filtersConfig";
 
-export type FilterType =
+export type FilterId =
   | "sharpen"
   | "emboss"
   | "invert"
@@ -11,14 +11,14 @@ export type FilterType =
   | "O2Filter"
   | "variance";
 
-export type FilterActionTypes =
-  | FilterType
+export type ActionType =
+  | FilterId
   | "reset"
-  | "setValue"
-  | "resetValue"
-  | "stopEditValue";
+  | "setCurrentFilterArgs"
+  | "resetCurrentFilterArgs"
+  | "stopEditCurrentFilter";
 
-export const filtersList: FilterType[] = [
+export const filtersList: FilterId[] = [
   "emboss",
   "osFilter",
   "invert",
@@ -30,25 +30,25 @@ export const filtersList: FilterType[] = [
 ];
 
 interface IActionInterface {
-  type: FilterActionTypes;
-  value?: number;
+  type: ActionType;
+  args?: unknown[];
 }
 
 interface ContrastAction extends IActionInterface {
   type: "contrast";
-  value: number;
+  args: unknown[];
 }
 
 interface VarianceAction extends IActionInterface {
   type: "variance";
-  value: number;
+  args: unknown[];
 }
 
 type Filter = ContrastAction | IActionInterface | VarianceAction;
 
 interface FiltersState {
   appliedFilters: Filter[];
-  editMode?: FilterType;
+  editMode?: FilterId;
 }
 
 const filtersReducer = (state: FiltersState, action: Filter) => {
@@ -81,14 +81,14 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
     };
   }
 
-  if (action.type === "setValue") {
+  if (action.type === "setCurrentFilterArgs") {
     return {
       ...state,
       appliedFilters: state.appliedFilters.map((filter) => {
         if (filter.type === state.editMode) {
           return {
             ...filter,
-            value: action.value,
+            args: action.args,
           };
         }
         return filter;
@@ -96,7 +96,7 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
     };
   }
 
-  if (action.type === "resetValue") {
+  if (action.type === "resetCurrentFilterArgs") {
     return {
       ...state,
       editMode: undefined,
@@ -106,7 +106,7 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
     };
   }
 
-  if (action.type === "stopEditValue") {
+  if (action.type === "stopEditCurrentFilter") {
     return {
       ...state,
       editMode: undefined,
@@ -145,23 +145,21 @@ export const useFilters = () => {
     console.log({ state });
   }, [state]);
 
-  const isFilterApplied = (filter: FilterType) =>
+  const isFilterApplied = (filter: FilterId) =>
     state.appliedFilters.some((appliedFilter) => appliedFilter.type === filter);
 
-  const isFilterDisabled = (filter: FilterType) =>
+  const isFilterDisabled = (filter: FilterId) =>
     state.appliedFilters.some((appliedFilter) =>
-      getFilterConfig(appliedFilter.type as FilterType).disables?.includes(
-        filter
-      )
+      getFilterConfig(appliedFilter.type as FilterId).disables?.includes(filter)
     );
 
-  const currentFilterConf = getFilterConfig(state.editMode as FilterType);
+  const currentFilterConf = getFilterConfig(state.editMode as FilterId);
 
   const currentFilter = {
     ...currentFilterConf,
-    value:
+    args:
       state.appliedFilters.find((filter) => filter.type === state.editMode)
-        ?.value || currentFilterConf?.initial,
+        ?.args || currentFilterConf?.initial,
   };
 
   const availableFilters = filtersList.filter(

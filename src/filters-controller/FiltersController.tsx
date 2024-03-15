@@ -1,5 +1,5 @@
 import { Slider } from "./Slider";
-import { FilterType, FiltersContext } from "./useFilters";
+import { FilterId, FiltersContext } from "./useFilters";
 import { getFilterConfig } from "./filtersConfig";
 import { ResetFiltersIcon } from "../assets/icons/ResetFiltersIcon";
 import { VolumeMeter } from "./VolumeMeter";
@@ -16,20 +16,20 @@ export const FiltersControllerBar = ({
     isFilterDisabled,
     dispatch,
     currentFilter,
-    availableFilters
+    availableFilters,
   } = filtersCtx;
 
-  const handleFilterChange = (newFilter: FilterType) => {
+  const handleFilterChange = (newFilter: FilterId) => {
     dispatch({ type: newFilter });
   };
 
   const handleSetVari = (value: number) => {
-    dispatch({ type: "setValue", value });
+    dispatch({ type: "setCurrentFilterArgs", args: [value] });
   };
 
   return (
     <div className="flex items-center justify-center gap-1 h-32 font-bold text-gray-700">
-      {!currentFilter.value ? (
+      {!currentFilter.args ? (
         <>
           {availableFilters.map((f) => {
             const Icon = getFilterConfig(f).icon || (() => <></>);
@@ -61,28 +61,28 @@ export const FiltersControllerBar = ({
           <div className="flex w-full bg-gray-300 rounded-3xl px-5 py-2 gap-10">
             {currentFilter.type === "slider" && (
               <Slider
-                value={currentFilter.value}
+                value={currentFilter.args[0]}
                 min={currentFilter.min || 0}
                 max={currentFilter.max || 1}
                 step={currentFilter.step || 0.01}
-                onChange={(value) => dispatch({ type: "setValue", value })}
+                onChange={(value) => dispatch({ type: "setCurrentFilterArgs", args: [value] })}
               />
             )}
             {currentFilter.type === "volume" && (
               <VolumeMeter
-                value={currentFilter.value}
+                value={currentFilter.args[0]}
                 onChange={handleSetVari}
               />
             )}
             <button
               className="text-gray-600 rounded-3xl px-6 py-2 bg-white"
-              onClick={() => dispatch({ type: "resetValue" })}
+              onClick={() => dispatch({ type: "resetCurrentFilterArgs" })}
             >
               Reset
             </button>
             <button
               className="bg-gray-600 rounded-3xl px-6 py-2 text-white"
-              onClick={() => dispatch({ type: "stopEditValue" })}
+              onClick={() => dispatch({ type: "stopEditCurrentFilter" })}
             >
               OK
             </button>

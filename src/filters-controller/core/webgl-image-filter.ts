@@ -1,4 +1,4 @@
-import { FilterType } from "../useFilters";
+import { FilterId } from "../useFilters";
 import {
   BLACK_AND_WHITE_SHADER,
   CONVOLUTION_SHADER,
@@ -18,10 +18,9 @@ const EMBOSS_FILTER_AMOUNT = 4;
 const SHARPEN_FILTER_AMOUNT = 10;
 
 interface Filter {
-  type: FilterType;
-  func?: WebGLFilterManager[FilterType];
+  type: FilterId;
+  func?: WebGLFilterManager[FilterId];
   args?: unknown[];
-  value?: number;
 }
 
 interface FrameBuffer {
@@ -57,7 +56,7 @@ export class WebGLFilterManager {
     }
   }
 
-  public addFilter(name: FilterType, ...args: unknown[]) {
+  public addFilter(name: FilterId, ...args: unknown[]) {
     // get the method from the name
     const filter = this[name];
     this._filterChain.push({ func: filter, args: args });
@@ -463,7 +462,7 @@ export class WebGLFilterManager {
 
   public applyFilters(filters: Filter[], image: HTMLImageElement) {
     filters.forEach((f) => {
-      this.addFilter(f.type, f.value);
+      this.addFilter(f.type, f.args);
     });
 
     return this.apply(image);
