@@ -1,6 +1,5 @@
-import { RefObject, useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer } from "react";
 import { getFilterConfig } from "./filtersConfig";
-import { WebGLImageFilter } from "./core";
 
 export type FilterType =
   | "sharpen"
@@ -139,7 +138,7 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
  * @param canvasRef - Reference to the canvas element.
  * @returns An object containing the applied filters, helper functions, and the current filter configuration.
  */
-export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
+export const useFilters = () => {
   const [state, dispatch] = useReducer(filtersReducer, {
     appliedFilters: [],
     editMode: undefined,
@@ -159,42 +158,6 @@ export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
       )
     );
 
-  const filterManagerRef = useRef<WebGLImageFilter>();
-  const inputImageRef = useRef<HTMLImageElement>(
-    new Image()
-  );
-  const filteredImageRef = useRef<HTMLImageElement>(new Image());
-  const renderingContextRef = useRef<CanvasRenderingContext2D | null>(null);
-
-  useEffect(() => {
-    inputImageRef.current.src = "4/top_view.png";
-
-    inputImageRef.current.onload = () => {
-      renderingContextRef.current = canvasRef.current?.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-      filterManagerRef.current = new WebGLImageFilter();
-      renderingContextRef.current.drawImage(inputImageRef.current, 0, 0);
-    };
-  }, [canvasRef]);
-
-  useEffect(() => {
-    if (!renderingContextRef.current || !filteredImageRef.current || !filterManagerRef.current) return;
-
-    if (state.appliedFilters.length === 0) {
-      renderingContextRef.current.drawImage(inputImageRef.current, 0, 0);
-    } else {
-      filteredImageRef.current = filterManagerRef.current.applyFilters(
-        state.appliedFilters,
-        inputImageRef.current
-      );
-      renderingContextRef.current.drawImage(filteredImageRef.current, 0, 0);
-    }
-
-    return () => {
-      filterManagerRef.current?.reset();
-    };
-  }, [state.appliedFilters]);
 
   const currentFilterConf = getFilterConfig(state.editMode as FilterType);
 
