@@ -1,1 +1,1 @@
-export { WebGLImageFilter } from './webgl-image-filter';
+export { WebGLFilterManager } from './webgl-image-filter';

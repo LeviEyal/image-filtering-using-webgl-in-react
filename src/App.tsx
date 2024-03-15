@@ -1,15 +1,15 @@
 import { useEffect, useRef } from "react";
 import { useFilters } from "./filters-controller/useFilters";
 import { FiltersControllerBar } from "./filters-controller/FiltersController";
-import { WebGLImageFilter } from "./filters-controller/core";
+import { WebGLFilterManager } from "./filters-controller/core";
 
 export const App = () => {
   const topCanvasRef = useRef<HTMLCanvasElement>(null);
   const sideCanvasRef = useRef<HTMLCanvasElement>(null);
   const state = useFilters();
 
-  const topFilterManagerRef = useRef<WebGLImageFilter>();
-  const sideFilterManagerRef = useRef<WebGLImageFilter>();
+  const topFilterManagerRef = useRef<WebGLFilterManager>();
+  const sideFilterManagerRef = useRef<WebGLFilterManager>();
   const topImageRef = useRef<HTMLImageElement>(new Image());
   const sideImageRef = useRef<HTMLImageElement>(new Image());
   const topFilteredImageRef = useRef<HTMLImageElement>(new Image());
@@ -26,7 +26,7 @@ export const App = () => {
         "2d"
       ) as CanvasRenderingContext2D;
 
-      topFilterManagerRef.current = new WebGLImageFilter();
+      topFilterManagerRef.current = new WebGLFilterManager();
       topRenderingContextRef.current.drawImage(topImageRef.current, 0, 0);
     };
 
@@ -35,7 +35,7 @@ export const App = () => {
         "2d"
       ) as CanvasRenderingContext2D;
 
-      sideFilterManagerRef.current = new WebGLImageFilter();
+      sideFilterManagerRef.current = new WebGLFilterManager();
       sideRenderingContextRef.current.drawImage(sideImageRef.current, 0, 0);
     };
   }, []);

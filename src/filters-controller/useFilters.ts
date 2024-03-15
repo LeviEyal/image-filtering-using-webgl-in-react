@@ -134,15 +134,12 @@ const filtersReducer = (state: FiltersState, action: Filter) => {
 
 /**
  * Custom hook for managing filters in an image processing application.
- *
- * @param canvasRef - Reference to the canvas element.
- * @returns An object containing the applied filters, helper functions, and the current filter configuration.
  */
 export const useFilters = () => {
   const [state, dispatch] = useReducer(filtersReducer, {
     appliedFilters: [],
     editMode: undefined,
-  } as FiltersState);
+  });
 
   useEffect(() => {
     console.log({ state });
@@ -157,7 +154,6 @@ export const useFilters = () => {
         filter
       )
     );
-
 
   const currentFilterConf = getFilterConfig(state.editMode as FilterType);
 

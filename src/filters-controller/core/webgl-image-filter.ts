@@ -17,86 +17,9 @@ const O2_FILTER_LIGHTNESS = 1;
 const EMBOSS_FILTER_AMOUNT = 4;
 const SHARPEN_FILTER_AMOUNT = 10;
 
-/**
- * Represents a WebGL program used for image filtering.
- */
-class WebGLProgram {
-  public uniform: Record<string, WebGLUniformLocation> = {};
-  public attribute: Record<string, number> = {};
-  public id: WebGLProgram;
-
-  constructor(
-    gl: WebGLRenderingContext,
-    vertexSource: string,
-    fragmentSource: string
-  ) {
-    const _collect = (
-      source: string,
-      prefix: string,
-      collection: Record<string, WebGLUniformLocation>
-    ) => {
-      const r = new RegExp("\\b" + prefix + " \\w+ (\\w+)", "ig");
-      source.replace(r, (match, name) => {
-        collection[name] = 0;
-        return match;
-      });
-    };
-
-    const _compile = (
-      gl: WebGLRenderingContext,
-      source: string,
-      type: number
-    ) => {
-      const shader = gl.createShader(type) as WebGLShader;
-      gl.shaderSource(shader, source);
-      gl.compileShader(shader);
-
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.log(gl.getShaderInfoLog(shader));
-        return null;
-      }
-      return shader;
-    };
-
-    const _vsh = _compile(gl, vertexSource, gl.VERTEX_SHADER) as WebGLShader;
-    const _fsh = _compile(
-      gl,
-      fragmentSource,
-      gl.FRAGMENT_SHADER
-    ) as WebGLShader;
-
-    this.id = gl.createProgram() as WebGLProgram;
-    gl.attachShader(this.id, _vsh);
-    gl.attachShader(this.id, _fsh);
-    gl.linkProgram(this.id);
-
-    if (!gl.getProgramParameter(this.id, gl.LINK_STATUS)) {
-      console.log(gl.getProgramInfoLog(this.id));
-    }
-
-    gl.useProgram(this.id);
-
-    // Collect attributes
-    _collect(vertexSource, "attribute", this.attribute);
-    for (const a in this.attribute) {
-      this.attribute[a] = gl.getAttribLocation(this.id, a);
-    }
-
-    // Collect uniforms
-    _collect(vertexSource, "uniform", this.uniform);
-    _collect(fragmentSource, "uniform", this.uniform);
-    for (const u in this.uniform) {
-      this.uniform[u] = gl.getUniformLocation(
-        this.id,
-        u
-      ) as WebGLUniformLocation;
-    }
-  }
-}
-
 interface Filter {
   type: FilterType;
-  func?: WebGLImageFilter[FilterType];
+  func?: WebGLFilterManager[FilterType];
   args?: unknown[];
   value?: number;
 }
@@ -105,11 +28,10 @@ interface FrameBuffer {
   fbo: WebGLFramebuffer | null;
   texture: WebGLTexture | null;
 }
-
 /**
  * Represents a WebGLImageFilter used for applying image filters using WebGL.
  */
-export class WebGLImageFilter {
+export class WebGLFilterManager {
   private _gl: WebGLRenderingContext;
   private _drawCount = 0;
   private _sourceTexture: WebGLTexture | null = null;
@@ -545,5 +467,82 @@ export class WebGLImageFilter {
     });
 
     return this.apply(image);
+  }
+}
+
+/**
+ * Represents a WebGL program used for image filtering.
+ */
+class WebGLProgram {
+  public uniform: Record<string, WebGLUniformLocation> = {};
+  public attribute: Record<string, number> = {};
+  public id: WebGLProgram;
+
+  constructor(
+    gl: WebGLRenderingContext,
+    vertexSource: string,
+    fragmentSource: string
+  ) {
+    const _collect = (
+      source: string,
+      prefix: string,
+      collection: Record<string, WebGLUniformLocation>
+    ) => {
+      const r = new RegExp("\\b" + prefix + " \\w+ (\\w+)", "ig");
+      source.replace(r, (match, name) => {
+        collection[name] = 0;
+        return match;
+      });
+    };
+
+    const _compile = (
+      gl: WebGLRenderingContext,
+      source: string,
+      type: number
+    ) => {
+      const shader = gl.createShader(type) as WebGLShader;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.log(gl.getShaderInfoLog(shader));
+        return null;
+      }
+      return shader;
+    };
+
+    const _vsh = _compile(gl, vertexSource, gl.VERTEX_SHADER) as WebGLShader;
+    const _fsh = _compile(
+      gl,
+      fragmentSource,
+      gl.FRAGMENT_SHADER
+    ) as WebGLShader;
+
+    this.id = gl.createProgram() as WebGLProgram;
+    gl.attachShader(this.id, _vsh);
+    gl.attachShader(this.id, _fsh);
+    gl.linkProgram(this.id);
+
+    if (!gl.getProgramParameter(this.id, gl.LINK_STATUS)) {
+      console.log(gl.getProgramInfoLog(this.id));
+    }
+
+    gl.useProgram(this.id);
+
+    // Collect attributes
+    _collect(vertexSource, "attribute", this.attribute);
+    for (const a in this.attribute) {
+      this.attribute[a] = gl.getAttribLocation(this.id, a);
+    }
+
+    // Collect uniforms
+    _collect(vertexSource, "uniform", this.uniform);
+    _collect(fragmentSource, "uniform", this.uniform);
+    for (const u in this.uniform) {
+      this.uniform[u] = gl.getUniformLocation(
+        this.id,
+        u
+      ) as WebGLUniformLocation;
+    }
   }
 }
