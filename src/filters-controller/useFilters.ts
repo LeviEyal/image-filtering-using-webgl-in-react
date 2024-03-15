@@ -160,7 +160,9 @@ export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
     );
 
   const filterManagerRef = useRef<WebGLImageFilter>();
-  const inputImageRef = useRef<HTMLImageElement>(new Image());
+  const inputImageRef = useRef<HTMLImageElement>(
+    new Image()
+  );
   const filteredImageRef = useRef<HTMLImageElement>(new Image());
   const renderingContextRef = useRef<CanvasRenderingContext2D | null>(null);
 
@@ -177,18 +179,15 @@ export const useFilters = (canvasRef: RefObject<HTMLCanvasElement>) => {
   }, [canvasRef]);
 
   useEffect(() => {
-    if (!renderingContextRef.current || !filteredImageRef.current) return;
+    if (!renderingContextRef.current || !filteredImageRef.current || !filterManagerRef.current) return;
 
     if (state.appliedFilters.length === 0) {
       renderingContextRef.current.drawImage(inputImageRef.current, 0, 0);
     } else {
-      state.appliedFilters.forEach((filter) => {
-        filterManagerRef.current?.addFilter(filter.type, filter.value);
-      });
-
-      filteredImageRef.current = filterManagerRef.current?.apply(
+      filteredImageRef.current = filterManagerRef.current.applyFilters(
+        state.appliedFilters,
         inputImageRef.current
-      )
+      );
       renderingContextRef.current.drawImage(filteredImageRef.current, 0, 0);
     }
 

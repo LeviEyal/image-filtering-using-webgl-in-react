@@ -6,7 +6,6 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const filtersCtx = useFilters(canvasRef);
 
-  
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100">
       <div className="flex items-center justify-center">
