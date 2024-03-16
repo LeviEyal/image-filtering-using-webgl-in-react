@@ -8,6 +8,7 @@ import {
   VERTEX_IDENTITY_SHADER,
   COLOR_MATRIX_WITHOUT_ALPHA_SHADER,
   COLOR_MATRIX_WITH_ALPHA_SHADER,
+  VARI_SHADER,
 } from "./shaders";
 
 const OS_FILTER_RANGE = [0, 2];
@@ -431,6 +432,42 @@ export class WebGLFilterManager {
   }
 
   /**
+   * Converts the image to black and white.
+   */
+  public blackWhite() {
+    this._compileShader(BLACK_AND_WHITE_SHADER);
+    this._draw();
+  }
+
+  public variance(args: number) {
+    const index = args || 4;
+    const bars = [
+      [0, 0.1111111111111111],
+      [0.1111111111111111, 0.2222222222222222],
+      [0.2222222222222222, 0.3333333333333333],
+      [0.3333333333333333, 0.4444444444444444],
+      [0.4444444444444444, 0.5555555555555556],
+      [0.5555555555555556, 0.6666666666666666],
+      [0.6666666666666666, 0.7777777777777777],
+      [0.7777777777777777, 0.8888888888888888],
+      [0.8888888888888888, 1.0],
+    ];
+    console.log(
+      "applying variance filter with: ",
+      bars[index][0],
+      bars[index][1]
+    );
+
+    const program = this._compileShader(VARI_SHADER);
+    this._gl.uniform2f(
+      program.uniform.lightness_range,
+      bars[index][0],
+      bars[index][1]
+    );
+    this._draw();
+  }
+
+  /**
    * Applies an O2 filter to the image using WebGL.
    */
   public O2Filter() {
@@ -442,21 +479,6 @@ export class WebGLFilterManager {
       program.uniform.lightness_for_deleted,
       _lightness_for_deleted
     );
-    this._draw();
-  }
-
-  /**
-   * Converts the image to black and white.
-   */
-  public blackWhite() {
-    this._compileShader(BLACK_AND_WHITE_SHADER);
-    this._draw();
-  }
-
-  public variance(variance: number) {
-    console.log("TODO: Implement variance filter with:", variance);
-    // TODO: Implement variance filter
-    this._compileShader(FRAGMENT_IDENTITY_SHADER);
     this._draw();
   }
 

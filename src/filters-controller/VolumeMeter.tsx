@@ -1,11 +1,15 @@
 interface VolumeMeterProps {
   value: number;
   onChange: (value: number) => void;
+  bars: number;
 }
 
-export const VolumeMeter = ({ onChange, value }: VolumeMeterProps) => {
-  const levels = [-4, -3, -2, -1, 1, 2, 3, 4, 5];
-  const currentIndex = levels.indexOf(value);
+export const VolumeMeter = ({ onChange, value, bars }: VolumeMeterProps) => {
+  const levels = Array.from(
+    { length: bars },
+    (_, i) => i - Math.floor(bars / 2) + 1
+  );
+  const currentIndex = value;
 
   const handleVolumeChange = (index: number) => {
     console.log({ index, currentIndex });
@@ -18,7 +22,7 @@ export const VolumeMeter = ({ onChange, value }: VolumeMeterProps) => {
       newVolumeIndex = currentIndex + 1;
     }
 
-    onChange(levels[newVolumeIndex]);
+    onChange(newVolumeIndex);
   };
 
   return (

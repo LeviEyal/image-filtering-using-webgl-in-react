@@ -17,6 +17,7 @@ interface FilterConfig {
   max?: number;
   step?: number;
   initial?: unknown[];
+  bars?: number;
   icon?: (props: IconProps) => JSX.Element;
   label: string;
   on: boolean;
@@ -58,7 +59,8 @@ const filtersConfig: Record<FilterId, FilterConfig> = {
     type: "volume",
     icon: VariFilterIcon,
     label: "Vari",
-    initial: [1],
+    initial: [4],
+    bars: 9,
     on: true,
   },
   contrast: {

@@ -71,7 +71,8 @@ export const FiltersControllerBar = ({
             {currentFilter.type === "volume" && (
               <VolumeMeter
                 value={currentFilter.args[0]}
-                onChange={handleSetVari}
+                bars={currentFilter.bars || 9}
+                onChange={(value) => dispatch({ type: "setCurrentFilterArgs", args: [value] })}
               />
             )}
             <button

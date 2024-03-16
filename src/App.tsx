@@ -18,8 +18,8 @@ export const App = () => {
   const sideRenderingContextRef = useRef<CanvasRenderingContext2D | null>(null);
 
   useEffect(() => {
-    topImageRef.current.src = "3/top_view.png";
-    sideImageRef.current.src = "3/side_view.png";
+    topImageRef.current.src = "4/top_view.png";
+    sideImageRef.current.src = "4/side_view.png";
 
     topImageRef.current.onload = () => {
       topRenderingContextRef.current = topCanvasRef.current?.getContext(
