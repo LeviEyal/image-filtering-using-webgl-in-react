@@ -8,7 +8,7 @@ interface SliderProps {
 
 export const Slider = (props: SliderProps) => {
   return (
-    <div className="w-full h-full bg-white rounded-3xl flex items-center justify-center p-1 m-auto">
+    <div id="filter-slider" className="w-full h-full bg-white rounded-3xl flex items-center justify-center p-1 m-auto">
       <input
         className="w-full appearance-none rounded-3xl cursor-pointer"
         type="range"

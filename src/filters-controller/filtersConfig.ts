@@ -7,7 +7,7 @@ import { O2FilterIcon } from "../assets/icons/O2FilterIcon";
 import { OsFilterIcon } from "../assets/icons/OsFilterIcon";
 import { SenFilterIcon } from "../assets/icons/SenFilterIcon";
 import { VariFilterIcon } from "../assets/icons/VariFilterIcon";
-import { FilterId } from "./useFilters";
+import { FilterId } from "./useFiltersManager";
 
 interface FilterConfig {
   id: FilterId;

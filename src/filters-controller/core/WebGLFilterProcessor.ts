@@ -1,15 +1,5 @@
-import { FilterId } from "../useFilters";
-import {
-  BLACK_AND_WHITE_SHADER,
-  CONVOLUTION_SHADER,
-  FRAGMENT_IDENTITY_SHADER,
-  INVERT_SHADER,
-  STRIP_HUE_RANGE_SHADER,
-  VERTEX_IDENTITY_SHADER,
-  COLOR_MATRIX_WITHOUT_ALPHA_SHADER,
-  COLOR_MATRIX_WITH_ALPHA_SHADER,
-  VARI_SHADER,
-} from "./shaders";
+import { FilterId } from "../useFiltersManager";
+import * as SHADERS from "./shaders";
 
 const OS_FILTER_RANGE = [0, 2];
 const OS_FILTER_LIGHTNESS = 1;
@@ -18,7 +8,7 @@ const O2_FILTER_LIGHTNESS = 1;
 const EMBOSS_FILTER_AMOUNT = 4;
 const SHARPEN_FILTER_AMOUNT = 10;
 
-interface Filter {
+interface FilterFunction {
   type: FilterId;
   func?: WebGLFilterProcessor[FilterId];
   args?: unknown[];
@@ -38,7 +28,7 @@ export class WebGLFilterProcessor {
   private _lastInChain = false;
   private _currentFramebufferIndex = -1;
   private _tempFramebuffers: FrameBuffer[] | null[] = [];
-  private _filterChain: Filter[] = [];
+  private _filterChain: FilterFunction[] = [];
   private _width = -1;
   private _height = -1;
   private _vertexBuffer: WebGLBuffer | null = null;
@@ -119,7 +109,7 @@ export class WebGLFilterProcessor {
 
     // No filters? Just draw
     if (this._filterChain.length == 0) {
-      this._compileShader(FRAGMENT_IDENTITY_SHADER);
+      this._compileShader(SHADERS.FRAGMENT_IDENTITY_SHADER);
       this._draw();
       return this._canvas;
     }
@@ -281,7 +271,7 @@ export class WebGLFilterProcessor {
     // Compile shaders
     this._currentProgram = new WebGLProgram(
       this._gl,
-      VERTEX_IDENTITY_SHADER,
+      SHADERS.VERTEX_IDENTITY_SHADER,
       fragmentSource
     );
 
@@ -332,8 +322,8 @@ export class WebGLFilterProcessor {
       0 == m[16] &&
       0 == m[17] &&
       0 == m[19]
-        ? COLOR_MATRIX_WITHOUT_ALPHA_SHADER
-        : COLOR_MATRIX_WITH_ALPHA_SHADER;
+        ? SHADERS.COLOR_MATRIX_WITHOUT_ALPHA_SHADER
+        : SHADERS.COLOR_MATRIX_WITH_ALPHA_SHADER;
 
     const program = this._compileShader(shader);
     this._gl.uniform1fv(program.uniform.m, m);
@@ -348,7 +338,7 @@ export class WebGLFilterProcessor {
     const pixelSizeX = 1 / this._width;
     const pixelSizeY = 1 / this._height;
 
-    const program = this._compileShader(CONVOLUTION_SHADER);
+    const program = this._compileShader(SHADERS.CONVOLUTION_SHADER);
     this._gl.uniform1fv(program.uniform.m, m);
     this._gl.uniform2f(program.uniform.px, pixelSizeX, pixelSizeY);
     this._draw();
@@ -396,7 +386,7 @@ export class WebGLFilterProcessor {
    * Inverts the colors of the image using WebGL.
    */
   public invert() {
-    this._compileShader(INVERT_SHADER);
+    this._compileShader(SHADERS.INVERT_SHADER);
     this._draw();
   }
 
@@ -420,7 +410,7 @@ export class WebGLFilterProcessor {
    * Applies an OS filter to the image using WebGL.
    */
   public osFilter() {
-    const program = this._compileShader(STRIP_HUE_RANGE_SHADER);
+    const program = this._compileShader(SHADERS.STRIP_HUE_RANGE_SHADER);
     const _hue_range = OS_FILTER_RANGE;
     const _lightness_for_deleted = OS_FILTER_LIGHTNESS;
     this._gl.uniform2f(program.uniform.hue_range, _hue_range[0], _hue_range[1]);
@@ -435,7 +425,7 @@ export class WebGLFilterProcessor {
    * Converts the image to black and white.
    */
   public blackWhite() {
-    this._compileShader(BLACK_AND_WHITE_SHADER);
+    this._compileShader(SHADERS.BLACK_AND_WHITE_SHADER);
     this._draw();
   }
 
@@ -461,7 +451,7 @@ export class WebGLFilterProcessor {
       to
     );
 
-    const program = this._compileShader(VARI_SHADER);
+    const program = this._compileShader(SHADERS.VARI_SHADER);
     this._gl.uniform2f(
       program.uniform.lightness_range,
       from,
@@ -474,7 +464,7 @@ export class WebGLFilterProcessor {
    * Applies an O2 filter to the image using WebGL.
    */
   public O2Filter() {
-    const program = this._compileShader(STRIP_HUE_RANGE_SHADER);
+    const program = this._compileShader(SHADERS.STRIP_HUE_RANGE_SHADER);
     const _hue_range = O2_FILTER_RANGE;
     const _lightness_for_deleted = O2_FILTER_LIGHTNESS;
     this._gl.uniform2f(program.uniform.hue_range, _hue_range[0], _hue_range[1]);
@@ -485,7 +475,7 @@ export class WebGLFilterProcessor {
     this._draw();
   }
 
-  public applyFilters(filters: Filter[], image: HTMLImageElement) {
+  public applyFilters(filters: FilterFunction[], image: HTMLImageElement) {
     filters.forEach((f) => {
       this.addFilter(f.type, f.args);
     });

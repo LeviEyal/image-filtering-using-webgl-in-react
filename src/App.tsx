@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
-import { useFilters } from "./filters-controller/useFilters";
+import { useFiltersManager } from "./filters-controller/useFiltersManager";
 import { FiltersControllerBar } from "./filters-controller/FiltersController";
 import { WebGLFilterProcessor } from "./filters-controller/core";
 
 export const App = () => {
   const topCanvasRef = useRef<HTMLCanvasElement>(null);
   const sideCanvasRef = useRef<HTMLCanvasElement>(null);
-  const state = useFilters();
+  const state = useFiltersManager();
 
   const topFilterManagerRef = useRef<WebGLFilterProcessor>();
   const sideFilterManagerRef = useRef<WebGLFilterProcessor>();
