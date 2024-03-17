@@ -1,1 +1,1 @@
-export { WebGLFilterManager } from './WebGLFilterManager';
+export { WebGLFilterProcessor } from "./WebGLFilterProcessor";

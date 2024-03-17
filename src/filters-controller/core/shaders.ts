@@ -39,8 +39,6 @@ varying vec2 vUv;
 uniform sampler2D texture; // Texture containing the image
 uniform vec2 lightness_range;
 
-varying vec2 v_texCoord; // Texture coordinates
-
 vec3 rgb2hls(vec3 rgb) {
     float maxVal = max(rgb.r, max(rgb.g, rgb.b));
     float minVal = min(rgb.r, min(rgb.g, rgb.b));
@@ -100,7 +98,6 @@ void main(void) {
     vec4 color = texture2D(texture, vUv);
     float u_a = lightness_range[0]; // Minimum lightness value
     float u_b = lightness_range[1]; // Maximum lightness value
-    // Sample the texture at the current texture coordinate
     
     // Convert the color from RGB to HSL
     vec3 hls = rgb2hls(color.rgb);
@@ -108,7 +105,6 @@ void main(void) {
     float lightness = hls.y;
     float saturation = hls.z;
     
-    // Check if the lightness is less than a
     if (lightness < u_a) {
         // Set lightness to 0
         lightness = 0.0;
@@ -123,87 +119,8 @@ void main(void) {
     // Convert HLS back to RGB
     vec3 rgb = hls2rgb(vec3(hue, lightness, saturation));
 
-    // Output the final color
     gl_FragColor = vec4(rgb, color.a);
 }`;
-
-// export const VARI_SHADER = `
-// precision highp float;
-// varying vec2 vUv;
-// uniform sampler2D texture; // Texture containing the image
-// uniform vec2 lightness_range;
-
-// varying vec2 v_texCoord; // Texture coordinates
-
-// float hueToRgb(float p, float q, float t) {
-//     if (t < 0.0) t += 1.0;
-//     if (t > 1.0) t -= 1.0;
-//     if (t < 1.0 / 6.0) return p + (q - p) * 6.0 * t;
-//     if (t < 1.0 / 2.0) return q;
-//     if (t < 2.0 / 3.0) return p + (q - p) * (2.0 / 3.0 - t) * 6.0;
-//     return p;
-// }
-
-// void main(void) {
-//     vec4 color = texture2D(texture, vUv);
-//     float u_a = lightness_range[0]; // Minimum lightness value
-//     float u_b = lightness_range[1]; // Maximum lightness value
-//     // Sample the texture at the current texture coordinate
-    
-//     // Convert the color from RGB to HSL
-//     float maxComponent = max(max(color.r, color.g), color.b);
-//     float minComponent = min(min(color.r, color.g), color.b);
-//     float lightness = (color.r + color.g + color.b) / 3.0;
-//     float saturation = (maxComponent == minComponent) ? 0.0 :
-//                        (lightness <= 0.5) ? (maxComponent - minComponent) / (maxComponent + minComponent) :
-//                        (maxComponent - minComponent) / (2.0 - maxComponent - minComponent);
-    
-//     // Check if the lightness is less than a
-//     if (lightness < u_a) {
-//         // Set lightness to 0
-//         lightness = 0.0;
-//     } else if (lightness > u_b) {
-//         // Set lightness to 1
-//         lightness = 1.0;
-//     } else {
-//         // Adjust lightness proportionally between a and b
-//         lightness = (lightness - u_a) / (u_b - u_a);
-//     }
-    
-//     // Convert HSL back to RGB
-//     float q = (lightness < 0.5) ? lightness * (1.0 + saturation) : lightness + saturation - lightness * saturation;
-//     float p = 2.0 * lightness - q;
-//     float r = hueToRgb(p, q, color.r + 1.0 / 3.0);
-//     float g = hueToRgb(p, q, color.r);
-//     float b = hueToRgb(p, q, color.r - 1.0 / 3.0);
-    
-//     // Output the final color
-//     gl_FragColor = vec4(r, g, b, color.a);
-// }`;
-
-// export const VARI_SHADER = `
-// precision highp float;
-// varying vec2 vUv;
-// uniform sampler2D texture;
-// uniform vec2 lightness_range;
-// varying vec2 v_texCoord;
-
-// void main(void) {
-//     vec4 c = texture2D(texture, vUv);
-//     float lightness = (c.r + c.g + c.b) / 3.0;
-//     if (lightness < lightness_range[0]) {
-//         gl_FragColor = vec4(0,0,0, c.a);
-//     }
-//     else if (lightness > lightness_range[1]) {
-//         gl_FragColor = vec4(1,1,1, c.a);
-//     } else {
-//         float a = lightness_range[0];
-//         float b = lightness_range[1];
-//         float new_lightness = (lightness - a) / (b - a);
-//         // set  R,G,B with new_lightness
-
-//     }
-// }`;
 
 export const INVERT_SHADER = `
 precision highp float;

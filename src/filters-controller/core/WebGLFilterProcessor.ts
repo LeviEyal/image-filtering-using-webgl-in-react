@@ -20,7 +20,7 @@ const SHARPEN_FILTER_AMOUNT = 10;
 
 interface Filter {
   type: FilterId;
-  func?: WebGLFilterManager[FilterId];
+  func?: WebGLFilterProcessor[FilterId];
   args?: unknown[];
 }
 
@@ -31,7 +31,7 @@ interface FrameBuffer {
 /**
  * Represents a WebGLImageFilter used for applying image filters using WebGL.
  */
-export class WebGLFilterManager {
+export class WebGLFilterProcessor {
   private _gl: WebGLRenderingContext;
   private _drawCount = 0;
   private _sourceTexture: WebGLTexture | null = null;
@@ -442,27 +442,30 @@ export class WebGLFilterManager {
   public variance(args: number) {
     const index = args || 4;
     const bars = [
-      [0, 0.1111111111111111],
-      [0.1111111111111111, 0.2222222222222222],
-      [0.2222222222222222, 0.3333333333333333],
-      [0.3333333333333333, 0.4444444444444444],
-      [0.4444444444444444, 0.5555555555555556],
-      [0.5555555555555556, 0.6666666666666666],
-      [0.6666666666666666, 0.7777777777777777],
-      [0.7777777777777777, 0.8888888888888888],
-      [0.8888888888888888, 1.0],
+      [64, 0],
+      [24, 88],
+      [48, 112],
+      [72, 136],
+      [96, 160],
+      [120, 184],
+      [144, 208],
+      [168, 232],
+      [192, 256],
     ];
+    const from = bars[index][0] / 256;
+    const to = bars[index][1] / 256;
+
     console.log(
       "applying variance filter with: ",
-      bars[index][0],
-      bars[index][1]
+      from,
+      to
     );
 
     const program = this._compileShader(VARI_SHADER);
     this._gl.uniform2f(
       program.uniform.lightness_range,
-      bars[index][0],
-      bars[index][1]
+      from,
+      to
     );
     this._draw();
   }
