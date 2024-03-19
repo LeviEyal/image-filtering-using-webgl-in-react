@@ -13,6 +13,11 @@ module.exports = {
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true },
+      
     ],
+    '@typescript-eslint/no-unused-vars': 'warn',
+    '@typescript-eslint/no-namespace': 'off',
+    '@typescript-eslint/no-empty-function': 'warn',
+    '@typescript-eslint/no-explicit-any': 'off',
   },
 }

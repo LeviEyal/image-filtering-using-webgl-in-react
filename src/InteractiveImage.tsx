@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { WebGLFilterProcessor } from "./filters-controller/core";
 import { useFiltersManager } from "./filters-controller/useFiltersManager";
 // import { Logo } from '@seetrue/shared-components/src';
