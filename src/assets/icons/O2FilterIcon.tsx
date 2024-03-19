@@ -1,6 +1,6 @@
 import { IconProps } from "./IconsProps";
 
-export const O2FilterIcon = ({ size = 45, ...props }: IconProps) => {
+export const o2FilterIcon = ({ size = 45, ...props }: IconProps) => {
   return (
     <svg
       width={size}

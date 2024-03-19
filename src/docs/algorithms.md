@@ -66,7 +66,7 @@ Where `v` is the contrast value and `o` is the offset value.
 ### Invert
 This algorithm inverts the colors of the image.
 The algorithm:
-1. Perform a Contrast operation with a contrast value of -1 (negative contrast).
+1. Sets the red, green, and blue channels to `1 - value`.
 
 ### Only Organics
 This algorithm removes all non-organic materials from the image.
@@ -85,3 +85,20 @@ Same as the "Only Organics" algorithm, but it removes all organic materials inst
 This algorithm increases the penetration of the image.
 The algorithm:
 TODO: Add algorithm details.
+
+## Tasks
+- Investigate how to implement the filters on the browser.
+- Implement the filters using webgl shaders.
+- Test the filters on different images.
+- Optimize the filters for performance.
+- Ensure compatibility on Firefox browser.
+- Implement the UI components.
+- Create the FiltersManagementContext to manage the filters with reducers.
+- Log each operation of the filters.
+- Validate the filters configuration sent by the frontend.
+
+backend tasks:
+- Design DB models for the filters configuration per station
+- Implement DB models for the filters configuration per station
+- Implement the API endpoints for the filters configuration per station
+- Integrate the filters configuration per station with the frontend

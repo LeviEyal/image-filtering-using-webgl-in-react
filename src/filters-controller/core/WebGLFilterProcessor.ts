@@ -1,12 +1,13 @@
-import { FilterId } from "../useFiltersManager";
+import { Filter, FilterId } from "../useFiltersManager";
+import { FilterProcessor } from "./FilterProcessor.interface";
 import * as SHADERS from "./shaders";
 
 const OS_FILTER_RANGE = [0, 2];
 const OS_FILTER_LIGHTNESS = 1;
-const O2_FILTER_RANGE = [2, 256];
+const O2_FILTER_RANGE = [2, 300];
 const O2_FILTER_LIGHTNESS = 1;
-const EMBOSS_FILTER_AMOUNT = 4;
-const SHARPEN_FILTER_AMOUNT = 10;
+const HIGH_PENETRATION_GAMMA_PERCENT = 0.35;
+const SHARPEN_FILTER_AMOUNT = 20;
 
 interface FilterFunction {
   type: FilterId;
@@ -21,7 +22,7 @@ interface FrameBuffer {
 /**
  * Represents a WebGLImageFilter used for applying image filters using WebGL.
  */
-export class WebGLFilterProcessor {
+export class WebGLFilterProcessor implements FilterProcessor {
   private _gl: WebGLRenderingContext;
   private _drawCount = 0;
   private _sourceTexture: WebGLTexture | null = null;
@@ -50,7 +51,7 @@ export class WebGLFilterProcessor {
   public addFilter(name: FilterId, ...args: unknown[]) {
     // get the method from the name
     const filter = this[name];
-    this._filterChain.push({ func: filter, args: args });
+    this._filterChain.push({ type: name, func: filter, args: args });
   }
 
   public reset() {
@@ -124,7 +125,6 @@ export class WebGLFilterProcessor {
   }
 
   private _resize(width: number, height: number) {
-    // Same width/height? Nothing to do here
     if (width == this._width && height == this._height) {
       return;
     }
@@ -147,14 +147,11 @@ export class WebGLFilterProcessor {
         this._gl.STATIC_DRAW
       );
 
-      // Note sure if this is a good idea; at least it makes texture loading
-      // in Ejecta instant.
       this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     }
 
     this._gl.viewport(0, 0, this._width, this._height);
 
-    // Delete old temp framebuffers
     this._tempFramebuffers = [null, null];
   }
 
@@ -390,20 +387,9 @@ export class WebGLFilterProcessor {
     this._draw();
   }
 
-  /**
-   * Applies a sharpen filter to the image.
-   */
   public sharpen() {
     const a = SHARPEN_FILTER_AMOUNT;
     this.convolution([0, -1 * a, 0, -1 * a, 1 + 4 * a, -1 * a, 0, -1 * a, 0]);
-  }
-
-  /**
-   * Applies the emboss filter to the image.
-   */
-  public emboss() {
-    const s = EMBOSS_FILTER_AMOUNT;
-    this.convolution([-2 * s, -1 * s, 0, -1 * s, 1, 1 * s, 0, 1 * s, 2 * s]);
   }
 
   /**
@@ -429,7 +415,7 @@ export class WebGLFilterProcessor {
     this._draw();
   }
 
-  public variance(args: number) {
+  public varAbsorption(args: number) {
     const index = args || 4;
     const bars = [
       [64, 0],
@@ -445,25 +431,17 @@ export class WebGLFilterProcessor {
     const from = bars[index][0] / 256;
     const to = bars[index][1] / 256;
 
-    console.log(
-      "applying variance filter with: ",
-      from,
-      to
-    );
+    console.log("applying varAbsorption filter with: ", from, to);
 
-    const program = this._compileShader(SHADERS.VARI_SHADER);
-    this._gl.uniform2f(
-      program.uniform.lightness_range,
-      from,
-      to
-    );
+    const program = this._compileShader(SHADERS.VAR_ABSORPTION_SHADER);
+    this._gl.uniform2f(program.uniform.lightness_range, from, to);
     this._draw();
   }
 
   /**
    * Applies an O2 filter to the image using WebGL.
    */
-  public O2Filter() {
+  public o2Filter() {
     const program = this._compileShader(SHADERS.STRIP_HUE_RANGE_SHADER);
     const _hue_range = O2_FILTER_RANGE;
     const _lightness_for_deleted = O2_FILTER_LIGHTNESS;
@@ -475,9 +453,16 @@ export class WebGLFilterProcessor {
     this._draw();
   }
 
-  public applyFilters(filters: FilterFunction[], image: HTMLImageElement) {
+  public highPenetrationFilter() {
+    const program = this._compileShader(SHADERS.HIGH_PENETRATION_SHADER);
+    const gamma_high = HIGH_PENETRATION_GAMMA_PERCENT;
+    this._gl.uniform1f(program.uniform.gamma_high, gamma_high);
+    this._draw();
+  }
+
+  public applyFilters(filters: Filter[], image: HTMLImageElement) {
     filters.forEach((f) => {
-      this.addFilter(f.type, f.args);
+      this.addFilter(f.type as FilterId, f.args);
     });
 
     return this.apply(image);
@@ -486,6 +471,12 @@ export class WebGLFilterProcessor {
 
 /**
  * Represents a WebGL program used for image filtering.
+ * Responsible for:
+ * - Compiling shaders.
+ * - Collecting uniforms and attributes.
+ * - Managing the program id.
+ * - Managing the program's uniforms and attributes.
+ * - Managing the program's shaders.
  */
 class WebGLProgram {
   public uniform: Record<string, WebGLUniformLocation> = {};

@@ -1,6 +1,16 @@
 import { useEffect, useReducer } from "react";
 import { getFilterConfig } from "./filtersConfig";
 
+export type FilterId =
+  | "sharpen"
+  | "highPenetrationFilter"
+  | "invert"
+  | "blackWhite"
+  | "contrast"
+  | "osFilter"
+  | "o2Filter"
+  | "varAbsorption";
+
 export type ActionType =
   | FilterId
   | "reset"
@@ -8,18 +18,16 @@ export type ActionType =
   | "resetCurrentFilterArgs"
   | "stopEditCurrentFilter";
 
-export const filtersList = [
-  "emboss",
+export const filtersList: FilterId[] = [
+  "highPenetrationFilter",
   "osFilter",
   "invert",
   "sharpen",
-  "O2Filter",
+  "o2Filter",
   "contrast",
   "blackWhite",
-  "variance",
+  "varAbsorption",
 ];
-
-export type FilterId = (typeof filtersList)[number];
 
 interface IActionInterface {
   type: ActionType;
@@ -31,12 +39,12 @@ interface ContrastAction extends IActionInterface {
   args: unknown[];
 }
 
-interface VarianceAction extends IActionInterface {
-  type: "variance";
+interface VarAbsorptionAction extends IActionInterface {
+  type: "varAbsorption";
   args: unknown[];
 }
 
-type Filter = ContrastAction | IActionInterface | VarianceAction;
+export type Filter = ContrastAction | IActionInterface | VarAbsorptionAction;
 
 interface FiltersState {
   appliedFilters: Filter[];
@@ -153,7 +161,7 @@ export const useFiltersManager = () => {
    * - icon: the icon of the filter.
    */
   const filters = filtersList
-    .filter((filter) => getFilterConfig(filter).on)
+    .filter((filter) => getFilterConfig(filter).show)
     .map((filter) => ({
       ...getFilterConfig(filter),
       args: state.appliedFilters.find((f) => f.type === filter)?.args,

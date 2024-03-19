@@ -1,96 +1,51 @@
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { useFiltersManager } from "./filters-controller/useFiltersManager";
 import { FiltersControllerBar } from "./filters-controller/FiltersController";
-import { WebGLFilterProcessor } from "./filters-controller/core";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { InteractiveImage } from "./InteractiveImage";
 
-export const App = () => {
-  const topCanvasRef = useRef<HTMLCanvasElement>(null);
-  const sideCanvasRef = useRef<HTMLCanvasElement>(null);
-  const state = useFiltersManager();
-
-  const topFilterManagerRef = useRef<WebGLFilterProcessor>();
-  const sideFilterManagerRef = useRef<WebGLFilterProcessor>();
-  const topImageRef = useRef<HTMLImageElement>(new Image());
-  const sideImageRef = useRef<HTMLImageElement>(new Image());
-  const topFilteredImageRef = useRef<HTMLImageElement>(new Image());
-  const sideFilteredImageRef = useRef<HTMLImageElement>(new Image());
-  const topRenderingContextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const sideRenderingContextRef = useRef<CanvasRenderingContext2D | null>(null);
-
-  useEffect(() => {
-    topImageRef.current.src = "4/top_view.png";
-    sideImageRef.current.src = "4/side_view.png";
-
-    topImageRef.current.onload = () => {
-      topRenderingContextRef.current = topCanvasRef.current?.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-
-      topFilterManagerRef.current = new WebGLFilterProcessor();
-      topRenderingContextRef.current.drawImage(topImageRef.current, 0, 0);
-    };
-
-    sideImageRef.current.onload = () => {
-      sideRenderingContextRef.current = sideCanvasRef.current?.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
-
-      sideFilterManagerRef.current = new WebGLFilterProcessor();
-      sideRenderingContextRef.current.drawImage(sideImageRef.current, 0, 0);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (
-      !topRenderingContextRef.current ||
-      !topFilteredImageRef.current ||
-      !sideFilterManagerRef.current ||
-      !topFilterManagerRef.current ||
-      !sideRenderingContextRef.current ||
-      !sideFilteredImageRef.current ||
-      !sideImageRef.current
-    )
-      return;
-
-    if (state.appliedFilters.length === 0) {
-      topRenderingContextRef.current.drawImage(topImageRef.current, 0, 0);
-      sideRenderingContextRef.current.drawImage(sideImageRef.current, 0, 0);
-    } else {
-      topFilteredImageRef.current = topFilterManagerRef.current.applyFilters(
-        state.appliedFilters,
-        topImageRef.current
-      );
-      topRenderingContextRef.current.drawImage(
-        topFilteredImageRef.current,
-        0,
-        0
-      );
-      sideFilteredImageRef.current = sideFilterManagerRef.current.applyFilters(
-        state.appliedFilters,
-        sideImageRef.current
-      );
-      sideRenderingContextRef.current.drawImage(
-        sideFilteredImageRef.current,
-        0,
-        0
-      );
-    }
-
-    return () => {
-      topFilterManagerRef.current?.reset();
-      sideFilterManagerRef.current?.reset();
-    };
-  }, [state.appliedFilters]);
+export const DualViewInspectTemplate = () => {
+  const filtersState = useFiltersManager();
+  const [currentBag, setCurrentBag] = useState(1);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100">
-      <div className="flex items-center justify-center">
-        <canvas ref={topCanvasRef} width={800} height={600} />
-        <canvas ref={sideCanvasRef} width={800} height={600} />
+      <h1 className="text-3xl mb-5">XRAY 2.0 Filters Management POC</h1>
+      <div>
+        <button
+          className="mb-5 border p-2 px-4 rounded-xl bg-gradient-to-r from-blue-800 to-cyan-600 text-white"
+          onClick={() => setCurrentBag((prev) => (prev + 4) % 5)}
+        >
+          Prev Bag
+        </button>
+        <button
+          className="mb-5 border p-2 px-4 rounded-xl bg-gradient-to-r from-blue-800 to-cyan-600 text-white"
+          onClick={() => setCurrentBag((prev) => (prev + 1) % 5)}
+        >
+          Next Bag
+        </button>
+      </div>
+      <div className="flex items-center justify-center gap-5">
+        <TransformWrapper>
+          <TransformComponent>
+            <InteractiveImage
+              src={`${currentBag}/top_view.png`}
+              filtersState={filtersState}
+            />
+          </TransformComponent>
+        </TransformWrapper>
+        <TransformWrapper>
+          <TransformComponent>
+            <InteractiveImage
+              src={`${currentBag}/side_view.png`}
+              filtersState={filtersState}
+            />
+          </TransformComponent>
+        </TransformWrapper>
       </div>
       <div className="w-full mt-5">
-        <FiltersControllerBar filtersCtx={state} />
+        <FiltersControllerBar filtersCtx={filtersState} />
       </div>
     </div>
   );
-}
+};
