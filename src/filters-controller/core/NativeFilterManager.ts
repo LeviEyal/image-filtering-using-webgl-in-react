@@ -27,8 +27,8 @@ export class NativeFilterManager {
         switch (filter.name) {
             case 'sharpen':
                 return this._sharpen(image, filter.args as number);
-            case 'emboss':
-                return this._emboss(image, filter.args as number);
+            case 'highPenetrationFilter':
+                return this._highPenetrationFilter(image, filter.args as number);
             case 'negative':
                 return this._negative(image);
             case 'blackWhite':
@@ -37,8 +37,8 @@ export class NativeFilterManager {
                 return this._contrast(image, filter.args as number);
             case 'osFilter':
                 return this._osFilter(image, filter.args as number[]);
-            case 'O2Filter':
-                return this._O2Filter(image, filter.args as number[]);
+            case 'o2Filter':
+                return this._o2Filter(image, filter.args as number[]);
             case 'senFilter':
                 return this._senFilter(image);
             default:
@@ -50,7 +50,7 @@ export class NativeFilterManager {
         return image;
     }
 
-    private _emboss(image: ImageData, factor: number) {
+    private _highPenetrationFilter(image: ImageData, factor: number) {
         return image;
     }
 }

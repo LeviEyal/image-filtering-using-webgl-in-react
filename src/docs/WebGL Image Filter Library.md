@@ -28,12 +28,12 @@ The `WebGLImageFilter` class provides a set of methods for applying various imag
 - **negative()**: Applies the negative filter to the image.
 - **invert()**: Inverts the colors of the image using WebGL.
 - **sharpen()**: Applies a sharpen filter to the image.
-- **emboss()**: Applies the emboss filter to the image.
+- **highPenetrationFilter()**: Applies the highPenetrationFilter filter to the image.
 - **osFilter()**: Applies an OS filter to the image using WebGL.
-- **O2Filter()**: Applies an O2 filter to the image using WebGL.
+- **o2Filter()**: Applies an O2 filter to the image using WebGL.
 - **blackWhite()**: Converts the image to black and white.
 
-The library also includes several constants for configuring the behavior of some filters, such as `OS_FILTER_RANGE`, `OS_FILTER_LIGHTNESS`, `O2_FILTER_RANGE`, `O2_FILTER_LIGHTNESS`, `EMBOSS_FILTER_AMOUNT`, and `SHARPEN_FILTER_AMOUNT`.
+The library also includes several constants for configuring the behavior of some filters, such as `OS_FILTER_RANGE`, `OS_FILTER_LIGHTNESS`, `O2_FILTER_RANGE`, `O2_FILTER_LIGHTNESS`, `highPenetrationFilter_FILTER_AMOUNT`, and `SHARPEN_FILTER_AMOUNT`.
 
 To use the library, you need to create an instance of `WebGLImageFilter`, add the desired filters to the filter chain using `addFilter`, and then call the `apply` method with the input image. The resulting canvas element can be used for further processing or rendering.
 

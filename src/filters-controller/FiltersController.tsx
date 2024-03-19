@@ -1,8 +1,8 @@
 import { Slider } from "./Slider";
 import { FilterId, FiltersManagerContext } from "./useFiltersManager";
-import { ResetFiltersIcon } from "../assets/icons/ResetFiltersIcon";
 import { VolumeMeter } from "./VolumeMeter";
 import { forwardRef } from "react";
+import { getIconByFilter } from "./filtersConfig";
 
 interface FiltersControllerBarProps {
   filtersCtx: FiltersManagerContext;
@@ -17,7 +17,7 @@ export const FilterButton = forwardRef<
     onClick: () => void;
   }
 >(({ filter, applied, disabled, onClick }, ref) => {
-  const Icon = filter.icon || (() => <></>);
+  const Icon = getIconByFilter(filter.id);
   return (
     <button
       ref={ref}
@@ -27,7 +27,7 @@ export const FilterButton = forwardRef<
       disabled={disabled}
       onClick={onClick}
     >
-      <Icon size={45} />
+      {Icon && <Icon size={45} />}
       {filter.label}
     </button>
   );
@@ -61,7 +61,6 @@ export const FiltersControllerBar = ({
             filter={{
               id: "reset",
               label: "Reset",
-              icon: ResetFiltersIcon,
             }}
             applied={false}
             disabled={false}

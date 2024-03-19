@@ -1,10 +1,10 @@
 import { BwFilterIcon } from "../assets/icons/BwFilterIcon";
 import { ContrastFilterIcon } from "../assets/icons/ContrastFilterIcon";
 import { HiFilterIcon } from "../assets/icons/HiFilterIcon";
-import { IconProps } from "../assets/icons/IconsProps";
 import { InvertFilterIcon } from "../assets/icons/InvertFilterIcon";
-import { O2FilterIcon } from "../assets/icons/O2FilterIcon";
+import { o2FilterIcon } from "../assets/icons/O2FilterIcon";
 import { OsFilterIcon } from "../assets/icons/OsFilterIcon";
+import { ResetFiltersIcon } from "../assets/icons/ResetFiltersIcon";
 import { SenFilterIcon } from "../assets/icons/SenFilterIcon";
 import { VariFilterIcon } from "../assets/icons/VariFilterIcon";
 import { FilterId } from "./useFiltersManager";
@@ -18,79 +18,94 @@ interface FilterConfig {
   step?: number;
   initial?: unknown[];
   bars?: number;
-  icon?: (props: IconProps) => JSX.Element;
   label: string;
-  on: boolean;
+  show: boolean;
 }
 
 const filtersConfig: Record<FilterId, FilterConfig> = {
   sharpen: {
     id: "sharpen",
-    type: "static",
-    icon: SenFilterIcon,
     label: "SEN",
-    on: true,
-  },
-  emboss: {
-    id: "emboss",
     type: "static",
-    disables: ["sharpen"],
-    icon: HiFilterIcon,
+    disables: ["contrast"],
+    show: true,
+  },
+  highPenetrationFilter: {
+    id: "highPenetrationFilter",
     label: "HI",
-    on: true,
+    type: "static",
+    disables: ["contrast"],
+    show: true,
   },
   invert: {
     id: "invert",
+    label: "Invert",
     type: "static",
     disables: ["contrast"],
-    icon: InvertFilterIcon,
-    label: "Invert",
-    on: true,
+    show: true,
   },
   blackWhite: {
     id: "blackWhite",
-    type: "static",
-    icon: BwFilterIcon,
     label: "BW",
-    on: true,
+    type: "static",
+    show: true,
   },
-  variance: {
-    id: "variance",
-    type: "volume",
-    icon: VariFilterIcon,
+  varAbsorption: {
+    id: "varAbsorption",
     label: "Vari",
+    type: "volume",
     initial: [4],
     bars: 9,
-    on: true,
+    show: true,
   },
   contrast: {
     id: "contrast",
+    label: "Contrast",
     type: "slider",
     min: -4,
     max: 4,
     step: 0.01,
     initial: [0],
-    icon: ContrastFilterIcon,
-    label: "Contrast",
-    on: true,
+    show: true,
   },
   osFilter: {
     id: "osFilter",
-    type: "static",
-    disables: ["O2Filter"],
-    icon: OsFilterIcon,
     label: "OS",
-    on: true,
+    type: "static",
+    disables: ["o2Filter"],
+    show: true,
   },
-  O2Filter: {
-    id: "O2Filter",
+  o2Filter: {
+    id: "o2Filter",
+    label: "O2",
     type: "static",
     disables: ["osFilter"],
-    icon: O2FilterIcon,
-    label: "O2",
-    on: true,
+    show: true,
   },
 };
+
+export const getIconByFilter = (filter: FilterId) => {
+  switch (filter) {
+    case "sharpen":
+      return SenFilterIcon;
+    case "highPenetrationFilter":
+      return HiFilterIcon;
+    case "invert":
+      return InvertFilterIcon;
+    case "blackWhite":
+      return BwFilterIcon;
+    case "varAbsorption":
+      return VariFilterIcon;
+    case "contrast":
+      return ContrastFilterIcon;
+    case "osFilter":
+      return OsFilterIcon;
+    case "o2Filter":
+      return o2FilterIcon;
+    default:
+      return ResetFiltersIcon;
+  }
+}
 
 export const getFilterConfig = (filter: FilterId) =>
   filtersConfig[filter] || null;
